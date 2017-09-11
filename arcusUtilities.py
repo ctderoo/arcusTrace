@@ -12,6 +12,12 @@ import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
 
 ####################################################################
+# Utility-related functions.
+
+def copy_rays(rays):
+    return [rays[i].copy() for i in range(len(rays))]
+
+####################################################################
 # Performance-related functions.
 
 def compute_cdf_pdf(rays1d):
