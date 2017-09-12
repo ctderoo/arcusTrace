@@ -38,13 +38,13 @@ def compute_hpd(rays1d):
 #############################################
 # Ray picking functions. 
 
-def select_xou_rays(rays,ind):
+def select_xou_rays(rays,xou_hit,ind):
     return asarray(rays)[:,where(xou_hit == ind)[0]]
 
-def select_grat_rays(rays,ind):
+def select_grat_rays(rays,grat_hit,ind):
     return asarray(rays)[:,where(grat_hit == ind)[0]]
 
-def check_normals(rays,ind):
+def check_normals(rays,grat_hit,ind):
     sample_rays = select_grat_rays(rays,ind)
     norms = vstack((sample_rays[4],sample_rays[5],sample_rays[6]))
     norms = transpose(norms)
