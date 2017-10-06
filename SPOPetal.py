@@ -12,7 +12,7 @@ import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
 import PyXFocus.transformMod as transM
 
-import arcusTrace.ParamFiles.arcus_params_rev1p5 as cfpar
+import arcusTrace.ParamFiles.arcus_params_rev1p6 as cfpar
 
 ####################################################################
 # SPO-Related Functions
