@@ -72,7 +72,7 @@ def CATgratTrace(rays,wave,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.0
     tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
     return grat_rays
 
-def GratPetalTrace(rays,ordernum = -9,wavenum = 1.24e-06):
+def GratPetalTrace(rays,ordernum = -9):
     for j in range(cfpar.N_grats):
         # Selecting the rays hitting the jth grating and creating a separate selection of "single grating rays" -- sgrat_rays
         sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
@@ -81,11 +81,10 @@ def GratPetalTrace(rays,ordernum = -9,wavenum = 1.24e-06):
         # Creating the wavelength and order vectors -- at present, these are identical to the user settings, but in the future, these
         # can be specified to in keeping with an astronomical source, etc. They can also be specified to have the appropriate order
         # distribution (0th - 12th).
-        wave = ones(len(sgrat_rays[0]))*wavenum
         order = ones(len(sgrat_rays[0]))*ordernum
 
         # Now actually diffracting just the rays hitting the jth grating.
-        sdiff_rays = CATgratTrace(sgrat_rays,wave,order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
+        sdiff_rays = CATgratTrace(sgrat_rays,sgrat_rays[0],order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
                                          cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j])
     
         # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"

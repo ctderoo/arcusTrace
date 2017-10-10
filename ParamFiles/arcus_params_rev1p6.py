@@ -13,6 +13,8 @@ from scipy.optimize import root
 F = 12000.
 pore_space = 0.605
 plate_space = 0.775
+MM_coat_mat = 'SiC'
+MM_coat_rough = 10
 #################
 # Lookup functionality.
 def row_param_construct(row_param1,row_param2):

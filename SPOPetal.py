@@ -11,7 +11,9 @@ import PyXFocus.transformations as tran
 import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
 import PyXFocus.transformMod as transM
+import PyXFocus.analyses as anal
 
+import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.ParamFiles.arcus_params_rev1p6 as cfpar
 
 ####################################################################
@@ -30,7 +32,7 @@ def SPO_ray_select(rays,rin,rout,width,clock_angle):
     return [asarray(rays)[i][ind] for i in range(len(rays))]
 
 def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
-             scatter=True):
+             scatter=True,apply_reflectivity = True):
     """
     Trace a set of rays through an SPO module using a
     finite source distance. Incorporate plate-by-plate
@@ -44,7 +46,7 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
     rout = outer radius of the SPO module (mm)
     azwidth = linear width of the SPO module (mm)
     F = nominal focal length of the SPO module
-    srcdist = Distance from the SPO interface to the X-ray source (mm)
+    scatter = boolean setting whether or not the SPO should scatter to be consistent with 2" HPD dispersion, 10" HPD cross-dispersion
     Outputs:
     rays = a ray object centered on the SPO, with:
         x - the radial coordinates, zeroed at the center of the SPO radius,
@@ -55,23 +57,43 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
     plate_height = 0.775
     pore_space = 0.605
     
+    if apply_reflectivity == True:
+        # A one-time call to set up the reflectivity function for this SPO XOU.
+        ref_func = ArcPerf.make_reflectivity_func(cfpar.MM_coat_mat,cfpar.MM_coat_rough)
+        
     # Define the angular ranges of the SPOs.
     R = arange(rin,rout,plate_height)
     rad = sqrt(chan_rays[1]**2+chan_rays[2]**2)
     v_ind_all = zeros(len(chan_rays[1]),dtype = bool)
+    geo_v,ref_v = 0,0
     for r in R:
         # Collect relevant rays: tr_ind are the rays that should be traced,
         # v_ind are the rays that should be vignetted (impacting plates).
         # Note that the sidewall vignetting is completely ignored.
         tr_ind = logical_and(rad > r,rad < r + pore_space)
         v_ind = logical_and(rad > r + pore_space, rad < r + plate_height)
+        geo_v = geo_v + sum(v_ind)
         v_ind_all = logical_or(v_ind,v_ind_all)
+        
+        # In case our sampling is so sparse that there are no rays fulfilling this condition.
         if sum(tr_ind) == 0: 
             continue
+        
         surf.spoPrimary(chan_rays,r,F,ind=tr_ind)
         tran.reflect(chan_rays,ind = tr_ind)
+        if apply_reflectivity == True:
+            # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
+            v_ind_ref = ArcPerf.ref_vignette_ind(chan_rays,ref_func,ind = tr_ind)
+            ref_v = ref_v + sum(v_ind_ref)
+            v_ind_all = logical_or(v_ind_ref,v_ind_all)
+        
         surf.spoSecondary(chan_rays,r,F,ind = tr_ind)
-        tran.reflect(chan_rays,ind = tr_ind)    
+        tran.reflect(chan_rays,ind = tr_ind)
+        if apply_reflectivity == True:
+            # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
+            v_ind_ref = ArcPerf.ref_vignette_ind(chan_rays,ref_func,ind = tr_ind)
+            ref_v = ref_v + sum(v_ind_ref)
+            v_ind_all = logical_or(v_ind_ref,v_ind_all)
     
     # Rays hitting the SPO mirror are now at secondary surfaces.
     # Vignette the rays hitting the plate stacks.
