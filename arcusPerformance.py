@@ -5,6 +5,7 @@ import pdb
 import pickle
 import glob
 from scipy.interpolate import RegularGridInterpolator as RGI
+from scipy.interpolate import interp1d
 
 import PyXFocus.sources as source
 import PyXFocus.surfaces as surf
@@ -145,4 +146,60 @@ def ref_vignette_ind(rays,ref_func,ind = None):
         vig_locs = crit > threshold
     return vig_locs
 
+########################################################################
+# Detector Absorption and QE
+########################################################################
 
+################
+# Detector QE
+
+def make_det_qe_func(det_qe_file = det_qe_fn):
+    qe_header,qe_data = read_caldb_csvfile(det_qe_file)
+    wave,qe = (1.240/qe_data[:,0]),qe_data[:,1]
+    qe_func = interp1d(wave,qe,kind = 'cubic')
+    return qe_func
+
+def det_qe_vignette(rays,qe_func):
+    N = len(rays[0])
+    crit = random.random(N)
+    wave_nm = rays[0]*10**6
+    threshold = qe_func(wave_nm)
+    vig_locs = crit < threshold
+    qe_applied_rays = tran.vignette(rays,ind = vig_locs)
+    return qe_applied_rays
+
+################
+# Detector Contamination
+
+def make_det_contam_func(det_contam_file = det_contam_fn):
+    contam_header,contam_data = read_caldb_csvfile(det_contam_file)
+    wave,contam = (1.240/contam_data[:,0]),contam_data[:,1]
+    contam_func = interp1d(wave,qe,kind = 'cubic')
+    return contam_func
+
+def det_contam_vignette(rays,contam_func):
+    N = len(rays[0])
+    crit = random.random(N)
+    wave_nm = rays[0]*10**6
+    threshold = contam_func(wave_nm)
+    vig_locs = crit < threshold
+    contam_applied_rays = tran.vignette(rays,ind = vig_locs)
+    return contam_applied_rays
+
+################
+# Filter Absorption
+
+def make_filter_abs_func(filter_abs_file = opt_block_fn):
+    filter_header,filter_data = read_caldb_csvfile(filter_abs_file)
+    wave,contam = (1.240/filter_data[:,0]),filter_data[:,1]
+    filter_func = interp1d(wave,qe,kind = 'cubic')
+    return filter_func
+
+def filter_abs_vignette(rays,filter_func):
+    N = len(rays[0])
+    crit = random.random(N)
+    wave_nm = rays[0]*10**6
+    threshold = filter_func(wave_nm)
+    vig_locs = crit < threshold
+    filter_applied_rays = tran.vignette(rays,ind = vig_locs)
+    return filter_applied_rays

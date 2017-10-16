@@ -201,3 +201,7 @@ for i in range(N_xous):
     grat_count = grat_count + len(temp)
     grat_num_by_xou.append(temp)
 
+det_xstart = 500
+det_xstep = 50.3
+det_xlocs = -(det_xstart + arange(8)*det_xstep)
+det_RoC = mean(zgrats)*2
