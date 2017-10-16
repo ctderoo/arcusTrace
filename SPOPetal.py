@@ -14,7 +14,7 @@ import PyXFocus.transformMod as transM
 import PyXFocus.analyses as anal
 
 import arcusTrace.arcusPerformance as ArcPerf
-import arcusTrace.ParamFiles.arcus_params_rev1p6 as cfpar
+import arcusTrace.ParamFiles.arcus_params_rev1p7 as cfpar
 
 ####################################################################
 # SPO-Related Functions
@@ -32,7 +32,7 @@ def SPO_ray_select(rays,rin,rout,width,clock_angle):
     return [asarray(rays)[i][ind] for i in range(len(rays))]
 
 def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
-             scatter=True,apply_reflectivity = True):
+             scatter=True,ref_func = None):
     """
     Trace a set of rays through an SPO module using a
     finite source distance. Incorporate plate-by-plate
@@ -57,15 +57,13 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
     plate_height = 0.775
     pore_space = 0.605
     
-    if apply_reflectivity == True:
-        # A one-time call to set up the reflectivity function for this SPO XOU.
-        ref_func = ArcPerf.make_reflectivity_func(cfpar.MM_coat_mat,cfpar.MM_coat_rough)
-        
     # Define the angular ranges of the SPOs.
     R = arange(rin,rout,plate_height)
     rad = sqrt(chan_rays[1]**2+chan_rays[2]**2)
     v_ind_all = zeros(len(chan_rays[1]),dtype = bool)
+    # Bookkeeping variables in case checking how many rays get vignetted (and through what process) is necessary.
     geo_v,ref_v = 0,0
+    
     for r in R:
         # Collect relevant rays: tr_ind are the rays that should be traced,
         # v_ind are the rays that should be vignetted (impacting plates).
@@ -81,7 +79,7 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
         
         surf.spoPrimary(chan_rays,r,F,ind=tr_ind)
         tran.reflect(chan_rays,ind = tr_ind)
-        if apply_reflectivity == True:
+        if ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
             v_ind_ref = ArcPerf.ref_vignette_ind(chan_rays,ref_func,ind = tr_ind)
             ref_v = ref_v + sum(v_ind_ref)
@@ -89,7 +87,7 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
         
         surf.spoSecondary(chan_rays,r,F,ind = tr_ind)
         tran.reflect(chan_rays,ind = tr_ind)
-        if apply_reflectivity == True:
+        if ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
             v_ind_ref = ArcPerf.ref_vignette_ind(chan_rays,ref_func,ind = tr_ind)
             ref_v = ref_v + sum(v_ind_ref)
@@ -121,7 +119,13 @@ def slope_trans(rays,angle):
     rays[4],rays[5],rays[6] = new_slopes[0,:],new_slopes[1,:],new_slopes[2,:]
     return
 
-def SPOPetalTrace(rays,module_range = range(cfpar.N_xous)):
+def SPOPetalTrace(rays,module_range = range(cfpar.N_xous),apply_reflectivity = True,scatter = True):
+    if apply_reflectivity == True:
+        # A one-time call to set up the reflectivity function for this SPO XOU.
+        ref_func = ArcPerf.make_reflectivity_func(cfpar.MM_coat_mat,cfpar.MM_coat_rough)
+    else:
+        ref_func = None
+        
     for i in module_range:
         # Produces the selection of rays hitting a particular (the "ith") XOU.
         xou_rays = SPO_ray_select(rays,cfpar.xou_irs[i],cfpar.xou_ors[i],cfpar.xou_widths[i],cfpar.xou_cangles[i])
@@ -132,7 +136,8 @@ def SPOPetalTrace(rays,module_range = range(cfpar.N_xous)):
 
         # Performing the trace through the SPO under `square on' incidence conditions, where the rays may be at a tilt set
         # by the cfpar.xou_tilts. 
-        thru_rays = SPOtrace(clocked_rays,rin = cfpar.xou_irs[i],rout = cfpar.xou_ors[i],azwidth = cfpar.xou_widths[i])
+        thru_rays = SPOtrace(clocked_rays,rin = cfpar.xou_irs[i],rout = cfpar.xou_ors[i],azwidth = cfpar.xou_widths[i],\
+                             scatter = scatter,ref_func = ref_func)
         
         # Reversing the clock angle and tracing the rays to the focal plane.
         tran.transform(thru_rays,0.,0.,-cfpar.F,0.,0.,cfpar.xou_cangles[i]*pi/180)

@@ -38,31 +38,50 @@ filter_directory = caldb_directory + '/' + '/filters'
 opt_block_fn = filter_directory + '/' + '/opticalblocking.csv'
 
 def read_caldb_csvfile(fn):
+    '''
+    Read in the .csv files from the CALDB format.
+    Input:
+    fn -- filename to be read in
+    Output:
+    header -- the column labels as strings
+    data -- the contents of the csvfile as a float.
+    '''
     file_contents = genfromtxt(fn,comments = '#',dtype = str)
     header,data = file_contents[0],file_contents[1:].astype('float')
     return header,data
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn):
+    '''
+    From the grating efficiency file in the CALDB directory, produce an interpolation function for
+    grating efficiency lookup as a function of incidence angle, wavelength, and order.
+    Input:
+    grat_eff_file -- path to the grating efficiency file in CALDB .csv format
+    Output:
+    geff_func -- a lookup function as a function of incidence angle, wavelength, and order.
+    '''
     geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
     # Hardcoding for now.
-    graze,wave,order = arange(0.7,5.05,0.05),arange(0.8,2.85,0.05),range(0,13,1)
-    geff = geff_data[:,2:].reshape(len(graze),len(wave),len(order))
-    return RGI(points = (graze,wave,order),values = geff)
+    theta,wave,order = arange(0.7,5.05,0.05),arange(0.8,2.85,0.05),range(0,13,1)
+    geff = geff_data[:,2:].reshape(len(theta),len(wave),len(order))
+    geff_func = RGI(points = (theta,wave,order),values = geff)
+    return geff_func
 
-geff_func = make_geff_interp_func()
+#geff_func = make_geff_interp_func()
 
-def pick_order(graze,wave,orders = range(0,13,1)):#grat_eff_file = grat_eff_fn):
-    N = len(graze)
+def pick_order(geff_func,theta,wave,orders = range(0,13,1)):
+    '''
+    '''
+    N = len(theta)
     crit = random.random(N)
     
-    if len(graze) != len(wave):
-        raise NameError('Graze angle and wavelength vectors are not matched')
+    if len(theta) != len(wave):
+        raise IndexError('Graze angle and wavelength vectors are not matched')
     
-    gmesh,omesh = meshgrid(graze,orders,indexing = 'ij')
+    gmesh,omesh = meshgrid(theta,orders,indexing = 'ij')
     wmesh,omesh = meshgrid(wave,orders,indexing = 'ij')
     order_cdf = cumsum(geff_func((gmesh,wmesh,omesh)),axis = 1)
     
-    order_vec = zeros(N) - 1
+    order_vec = zeros(N) - 1000
     for i in range(N):
         try:
             order_vec[i] = orders[sum(~(crit[i] < order_cdf[i]))]
@@ -125,18 +144,5 @@ def ref_vignette_ind(rays,ref_func,ind = None):
         threshold = ref_func((graze,energy))
         vig_locs = crit > threshold
     return vig_locs
-#def ref_vignette_ind(graze,wave,ref_func):
-#    '''
-#    Generate N random numbers (crit). If these random numbers are below the reflectivity
-#    (threshold) for the graze angle and energy of the ray, then the ray is kept; if it is
-#    above, it is vignetted.
-#    '''
-#    if len(graze) != len(wave):
-#        raise NameError('Graze angle and wavelength vectors are not matched')
-#    
-#    N = len(graze)
-#    crit = random.random(N)
-#    energy = 1240./wave
-#    threshold = ref_func((graze,energy))
-#    return crit > threshold
+
 

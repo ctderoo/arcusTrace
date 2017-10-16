@@ -169,17 +169,46 @@ Now to establish the grating orientations.
 '''
 
 # First, pointing the gratings towards the telescope focus -- setting normal incidence while being positioned on the Rowland torus.
+# The nominal normal of the transmission gratings, focus_ngrats, points towards the focus of telescope.
 norm_ind_grats = asarray([array([xgrats[i],ygrats[i],zgrats[i]]) for i in range(N_grats)])
-ngrats = asarray([norm_ind_grats[i]/linalg.norm(norm_ind_grats[i]) for i in range(N_grats)])
+focus_ngrats = asarray([norm_ind_grats[i]/linalg.norm(norm_ind_grats[i]) for i in range(N_grats)])
 
-# Constructing a grating bar vector that's 1) orthogonal to the normal vector and 2) orthogonal to x_hat.
-gbars = asarray([array([0,1.,-norm_ind_grats[i][1]/norm_ind_grats[i][2]]) for i in range(N_grats)])
+# Constructing a grating bar vector that's 1) orthogonal to the normal vector and 2) orthogonal to x_hat. The
+# weighting done in the third slot ensures orthogonality.
+gbars = asarray([array([0,1.,-focus_ngrats[i][1]/focus_ngrats[i][2]]) for i in range(N_grats)])
 gbars = asarray([gbars[i]/linalg.norm(gbars[i]) for i in range(N_grats)])
+
+# Now rotating about the grating bars to set the desired blaze angle. First, we produce a rotation matrix to
+# rotate another vector about the grating bar direction by the desired incidence angle alpha. Then we rotate
+# the nominal transmission grating normal (pointed towards the focus) about the grating bar direction by the
+# incidence angle.
+ngrats = array([dot(tran.tr.rotation_matrix(alpha,gbars[i])[:3,:3],focus_ngrats[i]) for i in range(len(gbars))])
 
 # Finally, constructing the orthogonal vector for each grating representing the local dispersion direction.
 gdisp = asarray([cross(gbars[i],ngrats[i]) for i in range(N_grats)])
 
+# Setting up these definitions as related to the torus -- the dispersion direction is related to the theta
+# direction of the Rowland torus, while the gbars direction in 
 tgrats,pgrats = gdisp,gbars
+pdb.set_trace()
+
+## First, pointing the gratings towards the telescope focus -- setting normal incidence while being positioned on the Rowland torus.
+#norm_ind_grats = asarray([array([xgrats[i],ygrats[i],zgrats[i]]) for i in range(N_grats)])
+#ngrats = asarray([norm_ind_grats[i]/linalg.norm(norm_ind_grats[i]) for i in range(N_grats)])
+#
+## Constructing a grating bar vector that's 1) orthogonal to the normal vector and 2) orthogonal to x_hat. The
+## weighting done in the third slot ensures orthogonality.
+#gbars = asarray([array([0,1.,-norm_ind_grats[i][1]/norm_ind_grats[i][2]]) for i in range(N_grats)])
+#gbars = asarray([gbars[i]/linalg.norm(gbars[i]) for i in range(N_grats)])
+#
+## Now rotating about the grating bars to set the desired blaze angle. First, 
+#gbar_rot_mat = tran.tr.rotation_matrix(alpha,gbars)
+#new_ngrats = dot(gbar_rot_mat,ngrats)
+#
+## Finally, constructing the orthogonal vector for each grating representing the local dispersion direction.
+#gdisp = asarray([cross(gbars[i],ngrats[i]) for i in range(N_grats)])
+#
+#tgrats,pgrats = gdisp,gbars
 
 grat_num_by_xou = []
 grat_count = 0
