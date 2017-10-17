@@ -69,8 +69,10 @@ def single_ccd(rays,loc,norm,ccd_size = (50,25)):
     
     ind = check_size(det_rays,ccd_size)
     good_rays = tran.vignette(det_rays,ind)
+    
+    # If the detector is empty, return the empty ray list.
     if sum(ind) == 0:
-        pdb.set_trace()
+        return good_rays,ind
     
     tran.transform(good_rays,0,0,0,0,0,-a3)
     tran.transform(good_rays,0,0,0,0,-a2,0)
@@ -78,8 +80,11 @@ def single_ccd(rays,loc,norm,ccd_size = (50,25)):
     tran.transform(good_rays,-det_x,-det_y,-det_z,0,0,0)
     return good_rays,ind
 
-def DetectorArrayTrace(rays):
+def DetectorArrayTrace(rays,diff_order,grat_hit,apply_qe = True,apply_contam = True,apply_filters = True):
     det_locs,det_norms = define_det_array(cfpar.det_xlocs,cfpar.det_RoC)
+    
+    def vignette_ray_stats(ray_stats,good_ind):
+        return ray_stats[good_ind]
     
     for i in range(len(det_locs)):
         ccd_rays,ccd_ind = single_ccd(rays,det_locs[i],det_norms[i])
@@ -87,8 +92,51 @@ def DetectorArrayTrace(rays):
             det_rays = ccd_rays
             det_ind = ccd_ind
             det_hit = ones(len(ccd_rays[0]))*i
+            det_ray_order = diff_order[ccd_ind]
+            det_ray_grat_hit = grat_hit[ccd_ind]
         else:
             det_rays = hstack((det_rays,ccd_rays))
-            det_ind = hstack((det_ind,ccd_ind))
+            det_ind = logical_or(det_ind,ccd_ind)
             det_hit = hstack((det_hit,ones(len(ccd_rays[0]))*i))
-    return det_rays,det_ind,det_hit
+            det_ray_order = hstack((det_ray_order,diff_order[ccd_ind]))
+            det_ray_grat_hit = hstack((det_ray_grat_hit,grat_hit[ccd_ind]))
+    #print len(det_rays[0]),sum(det_ind)
+    
+    if apply_qe == True:
+        qe_func = ArcPerf.make_det_qe_func()
+        det_rays,qe_vig_list = ArcPerf.det_qe_vignette(det_rays,qe_func)
+        det_hit = det_hit[qe_vig_list]
+        
+        det_ray_order = det_ray_order[qe_vig_list]
+        det_ray_grat_hit = det_ray_grat_hit[qe_vig_list]
+        ## Pick out the ray indices that have hit detectors "(det_ind == True)" and have
+        ## not been vignetted by this current operation "[qe_vig_list]".
+        #good_ind = where(det_ind == True)[0][qe_vig_list]
+        ## Creating a new "good rays" vector of length input "rays"
+        #det_ind = zeros(len(det_ind),bool)
+        ## Then setting the appropriate indices of the input "rays" not to be vignetted.
+        #det_ind[good_ind] = True
+        
+    if apply_contam == True:
+        contam_func = ArcPerf.make_det_contam_func()
+        det_rays,contam_vig_list = ArcPerf.det_contam_vignette(det_rays,contam_func)
+        det_hit = det_hit[contam_vig_list]
+        
+        det_ray_order = det_ray_order[contam_vig_list]
+        det_ray_grat_hit= det_ray_grat_hit[contam_vig_list]
+        #good_ind = where(det_ind == True)[0][contam_vig_list]
+        #det_ind = zeros(len(det_ind),bool)
+        #det_ind[good_ind] = True
+    
+    if apply_filters == True:
+        filter_func = ArcPerf.make_filter_abs_func()
+        det_rays,filter_vig_list = ArcPerf.filter_abs_vignette(det_rays,filter_func)
+        det_hit = det_hit[filter_vig_list]
+        
+        det_ray_order = det_ray_order[filter_vig_list]
+        det_ray_grat_hit= det_ray_grat_hit[filter_vig_list]
+        #good_ind = where(det_ind == True)[0][filter_vig_list]
+        #det_ind = zeros(len(det_ind),bool)
+        #det_ind[good_ind] = True
+    
+    return det_rays,det_hit,det_ray_order,det_ray_grat_hit

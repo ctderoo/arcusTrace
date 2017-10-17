@@ -73,11 +73,11 @@ def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4)
     tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
     return grat_rays
 
-def GratPetalTrace(rays,order_select = None):
+def GratPetalTrace(rays,order_select = None,apply_support_structure = True):
     '''
     Inputs:
     order_select: an integer that sets what order is raytraced for all gratings within the petal. If 'None',
-    the order selection is done by 
+    the order selection is done by the grating efficiency function linked to the Arcus parameters.
     '''
     # If the order selection is specified by a grating efficiency function,
     # calculate the interpolation function once for all gratings to be traced (outside loop).
@@ -89,6 +89,10 @@ def GratPetalTrace(rays,order_select = None):
         sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
                                                 cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
         
+        if apply_support_structure == True:
+            sgrat_rays,L1_vig_ind = ArcPerf.apply_support_structure(sgrat_rays,support = 'L1')
+            sgrat_rays,L2_vig_ind = ArcPerf.apply_support_structure(sgrat_rays,support = 'L2')
+            
         # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
         thetas = anal.indAngle(sgrat_rays,normal = -cfpar.ngrats[j])*180/pi
         
