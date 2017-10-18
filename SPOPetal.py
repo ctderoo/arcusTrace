@@ -119,7 +119,8 @@ def slope_trans(rays,angle):
     rays[4],rays[5],rays[6] = new_slopes[0,:],new_slopes[1,:],new_slopes[2,:]
     return
 
-def SPOPetalTrace(rays,module_range = range(cfpar.N_xous),apply_reflectivity = True,scatter = True):
+def SPOPetalTrace(rays,module_range = range(cfpar.N_xous),apply_reflectivity = True,
+                  apply_pore_vignetting = True,scatter = True):
     if apply_reflectivity == True:
         # A one-time call to set up the reflectivity function for this SPO XOU.
         ref_func = ArcPerf.make_reflectivity_func(cfpar.MM_coat_mat,cfpar.MM_coat_rough)
@@ -130,6 +131,9 @@ def SPOPetalTrace(rays,module_range = range(cfpar.N_xous),apply_reflectivity = T
         # Produces the selection of rays hitting a particular (the "ith") XOU.
         xou_rays = SPO_ray_select(rays,cfpar.xou_irs[i],cfpar.xou_ors[i],cfpar.xou_widths[i],cfpar.xou_cangles[i])
         
+        if apply_pore_vignetting == True:
+            xou_rays,pore_vig_ind = ArcPerf.apply_support_vignetting(xou_rays,support = 'PoreStructure')
+            
         # Clocking the rays at the SPO clock angle.
         clocked_rays = tran.copy_rays(xou_rays)
         tran.transform(clocked_rays,0.,0.,0.,0.,0.,-cfpar.xou_cangles[i]*pi/180)

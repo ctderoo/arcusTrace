@@ -80,7 +80,8 @@ def single_ccd(rays,loc,norm,ccd_size = (50,25)):
     tran.transform(good_rays,-det_x,-det_y,-det_z,0,0,0)
     return good_rays,ind
 
-def DetectorArrayTrace(rays,diff_order,grat_hit,apply_qe = True,apply_contam = True,apply_filters = True):
+def DetectorArrayTrace(rays,diff_order,grat_hit,apply_qe = True,apply_contam = True,\
+                       apply_filters = True):
     det_locs,det_norms = define_det_array(cfpar.det_xlocs,cfpar.det_RoC)
     
     def vignette_ray_stats(ray_stats,good_ind):
@@ -103,40 +104,31 @@ def DetectorArrayTrace(rays,diff_order,grat_hit,apply_qe = True,apply_contam = T
     #print len(det_rays[0]),sum(det_ind)
     
     if apply_qe == True:
-        qe_func = ArcPerf.make_det_qe_func()
-        det_rays,qe_vig_list = ArcPerf.det_qe_vignette(det_rays,qe_func)
+        det_rays,qe_vig_list = ArcPerf.apply_detector_effect_vignetting(det_rays,ArcPerf.det_qe_fn)
         det_hit = det_hit[qe_vig_list]
-        
         det_ray_order = det_ray_order[qe_vig_list]
         det_ray_grat_hit = det_ray_grat_hit[qe_vig_list]
-        ## Pick out the ray indices that have hit detectors "(det_ind == True)" and have
-        ## not been vignetted by this current operation "[qe_vig_list]".
-        #good_ind = where(det_ind == True)[0][qe_vig_list]
-        ## Creating a new "good rays" vector of length input "rays"
-        #det_ind = zeros(len(det_ind),bool)
-        ## Then setting the appropriate indices of the input "rays" not to be vignetted.
-        #det_ind[good_ind] = True
         
     if apply_contam == True:
-        contam_func = ArcPerf.make_det_contam_func()
-        det_rays,contam_vig_list = ArcPerf.det_contam_vignette(det_rays,contam_func)
+        det_rays,contam_vig_list = ArcPerf.apply_detector_effect_vignetting(det_rays,ArcPerf.det_contam_fn)
         det_hit = det_hit[contam_vig_list]
-        
         det_ray_order = det_ray_order[contam_vig_list]
-        det_ray_grat_hit= det_ray_grat_hit[contam_vig_list]
-        #good_ind = where(det_ind == True)[0][contam_vig_list]
-        #det_ind = zeros(len(det_ind),bool)
-        #det_ind[good_ind] = True
+        det_ray_grat_hit = det_ray_grat_hit[contam_vig_list]
     
     if apply_filters == True:
-        filter_func = ArcPerf.make_filter_abs_func()
-        det_rays,filter_vig_list = ArcPerf.filter_abs_vignette(det_rays,filter_func)
-        det_hit = det_hit[filter_vig_list]
+        det_rays,opt_filter_vig_list = ArcPerf.apply_detector_effect_vignetting(det_rays,ArcPerf.opt_block_fn)
+        det_hit = det_hit[opt_filter_vig_list]
+        det_ray_order = det_ray_order[opt_filter_vig_list]
+        det_ray_grat_hit = det_ray_grat_hit[opt_filter_vig_list]
+
+        det_rays,uv_filter_vig_list = ArcPerf.apply_detector_effect_vignetting(det_rays,ArcPerf.uv_block_fn)
+        det_hit = det_hit[uv_filter_vig_list]
+        det_ray_order = det_ray_order[uv_filter_vig_list]
+        det_ray_grat_hit = det_ray_grat_hit[uv_filter_vig_list]
         
-        det_ray_order = det_ray_order[filter_vig_list]
-        det_ray_grat_hit= det_ray_grat_hit[filter_vig_list]
-        #good_ind = where(det_ind == True)[0][filter_vig_list]
-        #det_ind = zeros(len(det_ind),bool)
-        #det_ind[good_ind] = True
+        det_rays,si_mesh_vig_list = ArcPerf.apply_detector_effect_vignetting(det_rays,ArcPerf.Si_mesh_block_fn)
+        det_hit = det_hit[si_mesh_vig_list]
+        det_ray_order = det_ray_order[si_mesh_vig_list]
+        det_ray_grat_hit = det_ray_grat_hit[si_mesh_vig_list]
     
     return det_rays,det_hit,det_ray_order,det_ray_grat_hit

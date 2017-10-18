@@ -24,6 +24,10 @@ home_directory = os.getcwd()
 caldb_directory = '/Users/Casey/Software/Bitbucket/caldb-inputdata'
 
 # Contains grating-related performance files, e.g. transmission from L1, L2 filters, order efficiency, etc.
+spo_directory = caldb_directory + '/spos'
+pore_transmission_fn = spo_directory + '/' + 'porespecifications.csv'
+
+# Contains grating-related performance files, e.g. transmission from L1, L2 filters, order efficiency, etc.
 grat_directory = caldb_directory + '/gratings'
 grat_eff_fn = grat_directory + '/' + 'efficiency.csv'
 grat_L1vig_fn = grat_directory + '/' + 'L1support.csv'
@@ -37,8 +41,8 @@ det_contam_fn = detector_directory + '/' + 'contam.csv'
 # Contains filter-related performance files, e.g. tranmissivity of the filters selected for Arcus.
 filter_directory = caldb_directory + '/' + '/filters'
 opt_block_fn = filter_directory + '/' + '/opticalblocking.csv'
-opt_block_fn = filter_directory + '/' + '/sifilter.csv'
-opt_block_fn = filter_directory + '/' + '/uvblocking.csv'
+Si_mesh_block_fn = filter_directory + '/' + '/sifilter.csv'
+uv_block_fn = filter_directory + '/' + '/uvblocking.csv'
 
 def read_caldb_csvfile(fn):
     '''
@@ -53,21 +57,32 @@ def read_caldb_csvfile(fn):
     header,data = file_contents[0],file_contents[1:].astype('float')
     return header,data
 
+
 ########################################################################
-# Grating efficiency, order selection, and structure vignetting.
+# Applications of straightforward geometric loss.
 ########################################################################
 
-def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,L2_support_file = grat_L2vig_fn):
+def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,\
+                             L2_support_file = grat_L2vig_fn,pore_transmission_file = pore_transmission_fn):
     N = len(rays[0])
     crit = random.random(N)
     if support == 'L1':
         structure_header,structure_data = read_caldb_csvfile(L1_support_file)
     elif support == 'L2':
         structure_header,structure_data = read_caldb_csvfile(L2_support_file)
+    elif support == 'PoreStructure':
+        structure_header,structure_data = read_caldb_csvfile(pore_transmission_file)
+    else:
+        pdb.set_trace()
+        
     transmission = structure_data[0]
-    vig_locs = crit < threshold
+    vig_locs = crit < transmission
     structure_rays = tran.vignette(rays,ind = vig_locs)
     return structure_rays,vig_locs
+
+########################################################################
+# Grating efficiency, order selection, and structure vignetting.
+########################################################################
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     '''
@@ -171,56 +186,77 @@ def ref_vignette_ind(rays,ref_func,ind = None):
 # Detector Absorption and QE
 ########################################################################
 
-################
-# Detector QE
-
-def make_det_qe_func(det_qe_file = det_qe_fn):
-    qe_header,qe_data = read_caldb_csvfile(det_qe_file)
-    wave,qe = (1.240/qe_data[:,0]),qe_data[:,1]
-    qe_func = interp1d(wave,qe,kind = 'cubic')
-    return qe_func
-
-def det_qe_vignette(rays,qe_func):
+def apply_detector_effect_vignetting(rays,eff_caldb_fn):
+    header,data = read_caldb_csvfile(eff_caldb_fn)
+    wave,effect = (1.240/data[:,0]),data[:,1]
+    interp_func = interp1d(wave,effect,kind = 'cubic')
+    
     N = len(rays[0])
     crit = random.random(N)
     wave_nm = rays[0]*10**6
-    threshold = qe_func(wave_nm)
+    threshold = interp_func(wave_nm)
     vig_locs = crit < threshold
-    qe_applied_rays = tran.vignette(rays,ind = vig_locs)
-    return qe_applied_rays,vig_locs
+    effect_applied_rays = tran.vignette(rays,ind = vig_locs)
+    return effect_applied_rays,vig_locs
 
-################
-# Detector Contamination
+#################
+## Detector QE
+#
+#def make_det_qe_func(det_qe_file = det_qe_fn):
+#    qe_header,qe_data = read_caldb_csvfile(det_qe_file)
+#    wave,qe = (1.240/qe_data[:,0]),qe_data[:,1]
+#    qe_func = interp1d(wave,qe,kind = 'cubic')
+#    return qe_func
+#
+#def det_qe_vignette(rays,qe_func):
+#    N = len(rays[0])
+#    crit = random.random(N)
+#    wave_nm = rays[0]*10**6
+#    threshold = qe_func(wave_nm)
+#    vig_locs = crit < threshold
+#    qe_applied_rays = tran.vignette(rays,ind = vig_locs)
+#    return qe_applied_rays,vig_locs
+#
+#################
+## Detector Contamination
+#
+#def make_det_contam_func(det_contam_file = det_contam_fn):
+#    contam_header,contam_data = read_caldb_csvfile(det_contam_file)
+#    wave,contam = (1.240/contam_data[:,0]),contam_data[:,1]
+#    contam_func = interp1d(wave,contam,kind = 'cubic')
+#    return contam_func
+#
+#def det_contam_vignette(rays,contam_func):
+#    N = len(rays[0])
+#    crit = random.random(N)
+#    wave_nm = rays[0]*10**6
+#    threshold = contam_func(wave_nm)
+#    vig_locs = crit < threshold
+#    contam_applied_rays = tran.vignette(rays,ind = vig_locs)
+#    return contam_applied_rays,vig_locs
+#
+#################
+## Filter Absorption
+#
+#def make_filter_abs_func(filter_abs_file = opt_block_fn):
+#    filter_header,filter_data = read_caldb_csvfile(filter_abs_file)
+#    wave,filter_trans = (1.240/filter_data[:,0]),filter_data[:,1]
+#    filter_func = interp1d(wave,filter_trans,kind = 'cubic')
+#    return filter_func
+#
+#def filter_abs_vignette(rays,filter_func):
+#    N = len(rays[0])
+#    crit = random.random(N)
+#    wave_nm = rays[0]*10**6
+#    threshold = filter_func(wave_nm)
+#    vig_locs = crit < threshold
+#    filter_applied_rays = tran.vignette(rays,ind = vig_locs)
+#    return filter_applied_rays,vig_locs
 
-def make_det_contam_func(det_contam_file = det_contam_fn):
-    contam_header,contam_data = read_caldb_csvfile(det_contam_file)
-    wave,contam = (1.240/contam_data[:,0]),contam_data[:,1]
-    contam_func = interp1d(wave,contam,kind = 'cubic')
-    return contam_func
-
-def det_contam_vignette(rays,contam_func):
-    N = len(rays[0])
-    crit = random.random(N)
-    wave_nm = rays[0]*10**6
-    threshold = contam_func(wave_nm)
-    vig_locs = crit < threshold
-    contam_applied_rays = tran.vignette(rays,ind = vig_locs)
-    return contam_applied_rays,vig_locs
-
-################
-# Filter Absorption
-
-def make_filter_abs_func(filter_abs_file = opt_block_fn):
-    filter_header,filter_data = read_caldb_csvfile(filter_abs_file)
-    wave,filter_trans = (1.240/filter_data[:,0]),filter_data[:,1]
-    filter_func = interp1d(wave,filter_trans,kind = 'cubic')
-    return filter_func
-
-def filter_abs_vignette(rays,filter_func):
-    N = len(rays[0])
-    crit = random.random(N)
-    wave_nm = rays[0]*10**6
-    threshold = filter_func(wave_nm)
-    vig_locs = crit < threshold
-    filter_applied_rays = tran.vignette(rays,ind = vig_locs)
-    return filter_applied_rays,vig_locs
+### Pick out the ray indices that have hit detectors "(det_ind == True)" and have
+### not been vignetted by this current operation "[qe_vig_list]".
+##good_ind = where(det_ind == True)[0][qe_vig_list]
+### Creating a new "good rays" vector of length input "rays"
+##det_ind = zeros(len(det_ind),bool)
+### Then setting the appropriate indices of the input "rays" not to be vignetted.
+##det_ind[good_ind] = True

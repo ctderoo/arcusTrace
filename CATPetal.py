@@ -90,8 +90,8 @@ def GratPetalTrace(rays,order_select = None,apply_support_structure = True):
                                                 cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
         
         if apply_support_structure == True:
-            sgrat_rays,L1_vig_ind = ArcPerf.apply_support_structure(sgrat_rays,support = 'L1')
-            sgrat_rays,L2_vig_ind = ArcPerf.apply_support_structure(sgrat_rays,support = 'L2')
+            sgrat_rays,L1_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L1')
+            sgrat_rays,L2_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L2')
             
         # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
         thetas = anal.indAngle(sgrat_rays,normal = -cfpar.ngrats[j])*180/pi
