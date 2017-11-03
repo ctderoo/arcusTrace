@@ -35,6 +35,12 @@ def compute_hpd(rays1d):
     cdf,pdf,x_locs = compute_cdf_pdf(rays1d)
     return hpd_cdf_intersection(cdf,x_locs)
 
+def compute_FWHM(rays1d):
+    '''
+    Based on Gaussian scaling of 1.35 sigma width for containing HPD, 2.35 sigma width for FWHM
+    '''
+    return compute_hpd(rays1d)*2.35/1.35
+
 #############################################
 # Ray picking functions. 
 

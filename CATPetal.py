@@ -13,7 +13,7 @@ import PyXFocus.conicsolve as conic
 
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
-import arcusTrace.ParamFiles.arcus_params_rev1p7 as cfpar
+import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # CAT Grating Related Functions
@@ -73,7 +73,7 @@ def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4)
     tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
     return grat_rays
 
-def GratPetalTrace(rays,order_select = None,apply_support_structure = True):
+def GratPetalTrace(rays,order_select = None,apply_support_structure = True,apply_debye_waller = True):
     '''
     Inputs:
     order_select: an integer that sets what order is raytraced for all gratings within the petal. If 'None',
@@ -93,6 +93,9 @@ def GratPetalTrace(rays,order_select = None,apply_support_structure = True):
             sgrat_rays,L1_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L1')
             sgrat_rays,L2_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L2')
             
+        if apply_debye_waller == True:
+            sgrat_rays,debye_waller_vig_ind = ArcPerf.apply_debye_waller(sgrat_rays)
+
         # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
         thetas = anal.indAngle(sgrat_rays,normal = -cfpar.ngrats[j])*180/pi
         
@@ -104,16 +107,24 @@ def GratPetalTrace(rays,order_select = None,apply_support_structure = True):
             # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
             # an order of -1000 if the ray would be absorbed.
             order,crit,order_cdf = ArcPerf.pick_order(geff_func,thetas,sgrat_rays[0]*10**6)
+            #pdb.set_trace()
             nonabsorbed_ind = order != -1000
             sgrat_rays = tran.vignette(sgrat_rays,ind = nonabsorbed_ind)
             order = order[nonabsorbed_ind]
+            #pdb.set_trace()
         else:
             raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
         
-        # Now actually diffracting just the rays hitting the jth grating.
-        sdiff_rays = CATgratTrace(sgrat_rays,order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
+        
+        # Now actually diffracting just the rays hitting the jth grating. If there are no rays hitting the
+        # jth grating, skip it.
+        
+        if len(sgrat_rays[0]) == 0:
+            sdiff_rays = sgrat_rays
+        else:
+            sdiff_rays = CATgratTrace(sgrat_rays,order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
                                          cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j])
-    
+        
         #pdb.set_trace()
         # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"
         # rays that don't pass through a grating, so some care is required.

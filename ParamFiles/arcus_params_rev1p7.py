@@ -201,7 +201,25 @@ for i in range(N_xous):
     grat_count = grat_count + len(temp)
     grat_num_by_xou.append(temp)
 
-det_xstart = 500
-det_xstep = 50.3
+det_xstart = 525
+det_xstep = 2048*0.024 + 0.3
 det_xlocs = -(det_xstart + arange(8)*det_xstep)
 det_RoC = mean(zgrats)*2
+
+def define_det_array(xlocs,RoC):
+    '''
+    From the channel origin, explicitly defines the detector array in the plane y = 0
+    from the x dimension locations specified. Number of detectors is given by the length
+    of the location array.
+    ''' 
+    zlocs = RoC - sqrt(RoC**2 - xlocs**2)
+    locs = array([array([xlocs[i],0,zlocs[i]]) for i in range(len(xlocs))])
+    
+    normals = array([array([-xlocs[i],0,RoC - zlocs[i]])/RoC for i in range(len(xlocs))])
+    cross_disp_dir = array([array([0,1,0]) for i in range(len(xlocs))])
+    disp_dir = array([cross(cross_disp_dir[i],normals[i]) for i in range(len(xlocs))])
+    
+    det_vecs = array([vstack((disp_dir[i],cross_disp_dir[i],normals[i])) for i in range(len(xlocs))])
+    return locs,det_vecs
+
+det_locs,det_vecs = define_det_array(det_xlocs,det_RoC)

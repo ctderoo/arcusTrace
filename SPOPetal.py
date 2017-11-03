@@ -14,7 +14,7 @@ import PyXFocus.transformMod as transM
 import PyXFocus.analyses as anal
 
 import arcusTrace.arcusPerformance as ArcPerf
-import arcusTrace.ParamFiles.arcus_params_rev1p7 as cfpar
+import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # SPO-Related Functions
@@ -99,8 +99,8 @@ def SPOtrace(chan_rays,rin=700.,rout=737.,azwidth=66.,F = 12000.,\
     
     # Add normalized scatter to the direction cosines if desired.
     if scatter is True:
-        chan_rays[4] = chan_rays[4] + random.normal(scale=1.5/2.35*5e-6,size=shape(chan_rays)[1])
-        chan_rays[5] = chan_rays[5] + random.normal(scale=15./2.35*5e-6,size=shape(chan_rays)[1])
+        chan_rays[4] = chan_rays[4] + random.normal(scale=1.93/2.35*5e-6,size=shape(chan_rays)[1])
+        chan_rays[5] = chan_rays[5] + random.normal(scale=15.5/2.35*5e-6,size=shape(chan_rays)[1])
         chan_rays[6] = -sqrt(1.-chan_rays[5]**2-chan_rays[4]**2)
     return chan_rays
 
@@ -120,10 +120,11 @@ def slope_trans(rays,angle):
     return
 
 def SPOPetalTrace(rays,module_range = range(cfpar.N_xous),apply_reflectivity = True,
-                  apply_pore_vignetting = True,scatter = True):
+                  apply_pore_vignetting = True,scatter = True,MM_coat_mat = cfpar.MM_coat_mat):
     if apply_reflectivity == True:
         # A one-time call to set up the reflectivity function for this SPO XOU.
-        ref_func = ArcPerf.make_reflectivity_func(cfpar.MM_coat_mat,cfpar.MM_coat_rough)
+        print 'Setting SPO MM reflectivity with ' + MM_coat_mat + '...'
+        ref_func = ArcPerf.make_reflectivity_func(MM_coat_mat,cfpar.MM_coat_rough)
     else:
         ref_func = None
         

@@ -13,7 +13,7 @@ import PyXFocus.conicsolve as conic
 
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
-import arcusTrace.ParamFiles.arcus_params_rev1p7 as cfpar
+import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # Detector-related functions.
@@ -28,21 +28,21 @@ def check_size(rays,phy_size):
     tcond = logical_and(xcond,ycond)
     return tcond
 
-def define_det_array(xlocs,RoC):
-    '''
-    From the channel origin, explicitly defines the detector array in the plane y = 0
-    from the x dimension locations specified. Number of detectors is given by the length
-    of the location array.
-    ''' 
-    zlocs = RoC - sqrt(RoC**2 - xlocs**2)
-    locs = array([array([xlocs[i],0,zlocs[i]]) for i in range(len(xlocs))])
-    
-    normals = array([array([-xlocs[i],0,RoC - zlocs[i]])/RoC for i in range(len(xlocs))])
-    cross_disp_dir = array([array([0,1,0]) for i in range(len(xlocs))])
-    disp_dir = array([cross(cross_disp_dir[i],normals[i]) for i in range(len(xlocs))])
-    
-    det_vecs = array([vstack((disp_dir[i],cross_disp_dir[i],normals[i])) for i in range(len(xlocs))])
-    return locs,det_vecs
+#def define_det_array(xlocs,RoC):
+#    '''
+#    From the channel origin, explicitly defines the detector array in the plane y = 0
+#    from the x dimension locations specified. Number of detectors is given by the length
+#    of the location array.
+#    ''' 
+#    zlocs = RoC - sqrt(RoC**2 - xlocs**2)
+#    locs = array([array([xlocs[i],0,zlocs[i]]) for i in range(len(xlocs))])
+#    
+#    normals = array([array([-xlocs[i],0,RoC - zlocs[i]])/RoC for i in range(len(xlocs))])
+#    cross_disp_dir = array([array([0,1,0]) for i in range(len(xlocs))])
+#    disp_dir = array([cross(cross_disp_dir[i],normals[i]) for i in range(len(xlocs))])
+#    
+#    det_vecs = array([vstack((disp_dir[i],cross_disp_dir[i],normals[i])) for i in range(len(xlocs))])
+#    return locs,det_vecs
 
 def single_ccd(rays,loc,norm,ccd_size = (50,25)):
     '''
@@ -81,8 +81,7 @@ def single_ccd(rays,loc,norm,ccd_size = (50,25)):
     return good_rays,ind
 
 def DetectorArrayTrace(rays,diff_order,grat_hit,apply_qe = True,apply_contam = True,\
-                       apply_filters = True):
-    det_locs,det_norms = define_det_array(cfpar.det_xlocs,cfpar.det_RoC)
+                       apply_filters = True,det_locs = cfpar.det_locs,det_norms = cfpar.det_vecs):
     
     def vignette_ray_stats(ray_stats,good_ind):
         return ray_stats[good_ind]

@@ -32,6 +32,7 @@ grat_directory = caldb_directory + '/gratings'
 grat_eff_fn = grat_directory + '/' + 'efficiency.csv'
 grat_L1vig_fn = grat_directory + '/' + 'L1support.csv'
 grat_L2vig_fn = grat_directory + '/' + 'L2support.csv'
+grat_debye_waller_fn = grat_directory + '/' + 'debyewaller.csv'
 
 # Contains detector-related performance files, e.g. contamination and QE
 detector_directory = caldb_directory + '/detectors'
@@ -84,6 +85,20 @@ def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn
 # Grating efficiency, order selection, and structure vignetting.
 ########################################################################
 
+def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
+    def debye_waller(d,sigma):
+        return exp(-2*pi*sigma/d)
+    
+    header,data = read_caldb_csvfile(debye_waller_file)
+    d,sigma = data[0,0],data[0,1]
+    threshold = debye_waller(d,sigma)
+    
+    N = len(rays[0])
+    crit = random.random(N)
+    vig_locs = crit < threshold
+    debyewaller_rays = tran.vignette(rays,ind = vig_locs)
+    return debyewaller_rays,vig_locs
+
 def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     '''
     From the grating efficiency file in the CALDB directory, produce an interpolation function for
@@ -99,8 +114,6 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func
-
-#geff_func = make_geff_interp_func()
 
 def pick_order(geff_func,theta,wave,orders = range(0,13,1)):
     '''
@@ -133,7 +146,7 @@ def pick_order(geff_func,theta,wave,orders = range(0,13,1)):
 # Overall responses are contained here.
 reflib_directory = '/Users/Casey/Software/ReflectLib'
 
-def return_ref_data(material,roughness):
+def return_ref_data(material,roughness):#,mirror_type = 'Thick',layer_thickness = 1.0):
     '''
     Inputs:
     material -- string specifying formula as given to CXRO
@@ -143,7 +156,10 @@ def return_ref_data(material,roughness):
     energy -- energy (eV) matrix matched to the reflectivity
     graze -- graze angle (degrees) matrix matched to the reflectivity
     '''
-    fn = glob.glob(reflib_directory + '/' + material + '*' + 'Rough' + "{0:02d}".format(roughness) + '*.npy')
+    #if mirror_type = 'Thick':
+    fn = glob.glob(reflib_directory + '/*' + material + '*' + 'Rough' + "{0:02d}".format(roughness) + '*.npy')
+    #if mirror_type = 'SingleLayer':
+    #    fn = glob.glob(reflib_directory + '/SingleLayerMirror' + material + '*' + '{:3.1f}'.format(layer_thickness).replace('.','p') + '*Rough' + "{0:02d}".format(roughness) + '*.npy')
     if len(fn) != 1:
         raise PrintError('Reflectivity file is not found uniquely - please check inputs.')
         pdb.set_trace()
