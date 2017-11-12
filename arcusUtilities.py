@@ -11,6 +11,35 @@ import PyXFocus.transformations as tran
 import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
 
+##########################################################################
+# Functions needed.
+##########################################################################
+
+def make_rot_matrix(tgrat,pgrat,ngrat):
+    return transpose([tgrat,pgrat,ngrat])
+
+def return_euler_angles(coord_sys):
+    R = make_rot_matrix(coord_sys.xhat,coord_sys.yhat,coord_sys.zhat)
+    a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
+    return a1,a2,a3
+
+def do_ray_transform_to_coordinate_system(rays,coord_sys):
+    transform_rays = copy_rays(rays)
+    R = make_rot_matrix(coord_sys.xhat,coord_sys.yhat,coord_sys.zhat)
+    a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
+    tran.transform(transform_rays,coord_sys.x,coord_sys.y,coord_sys.z,a1,a2,a3)
+    return [asarray(transform_rays)[i] for i in range(len(rays))]
+
+def undo_ray_transform_to_coordinate_system(rays,coord_sys):
+    transform_rays = copy_rays(rays)
+    R = make_rot_matrix(coord_sys.xhat,coord_sys.yhat,coord_sys.zhat)
+    a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
+    tran.transform(transform_rays,0,0,0,0, 0,-a3)
+    tran.transform(transform_rays,0,0,0,0,-a2,0)
+    tran.transform(transform_rays,0,0,0,-a1,0,0)
+    tran.transform(transform_rays,-coord_sys.x,-coord_sys.y,-coord_sys.z,0,0,0)
+    return [asarray(transform_rays)[i] for i in range(len(rays))]
+
 ####################################################################
 # Utility-related functions.
 

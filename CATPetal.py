@@ -13,10 +13,23 @@ import PyXFocus.conicsolve as conic
 
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
+import arcusTrace.arcusRays as ArcRays
 import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # CAT Grating Related Functions
+
+def id_facet_for_rays(ray_object,facet_dict):
+    rays = ray_object.yield_prays()
+    facet_hit = empty(len(rays[0]))
+    facet_hit.fill(NaN)
+    
+    for key in facet_dict.keys():
+        grat_rays = ArcUtil.do_ray_transform_to_coordinate_system(rays,facet_dict[key].facet_coords)
+        surf.flat(grat_rays)
+        bool_list = (grat_rays[1] < facet_dict[key].xsize/2)*(grat_rays[1] > -facet_dict[key].xsize/2)*(grat_rays[2] < facet_dict[key].ysize/2)*(grat_rays[2] > -facet_dict[key].ysize/2)
+        facet_hit[bool_list] = facet_dict[key].facet_num
+    ray_object.facet_hit = facet_hit
 
 def grat_ray_select(rays,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,xwidth,ywidth):
     grat_rays = ArcUtil.copy_rays(rays)
@@ -73,57 +86,11 @@ def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4)
     tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
     return grat_rays
 
-def GratPetalTrace(rays,order_select = None,apply_support_structure = True,apply_debye_waller = True):
-    '''
-    Inputs:
-    order_select: an integer that sets what order is raytraced for all gratings within the petal. If 'None',
-    the order selection is done by the grating efficiency function linked to the Arcus parameters.
-    '''
-    # If the order selection is specified by a grating efficiency function,
-    # calculate the interpolation function once for all gratings to be traced (outside loop).
-    if order_select == None:
-        geff_func = ArcPerf.make_geff_interp_func()
-    
     for j in range(cfpar.N_grats):
         # Selecting the rays hitting the jth grating and creating a separate selection of "single grating rays" -- sgrat_rays
         sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
                                                 cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
-        
-        if apply_support_structure == True:
-            sgrat_rays,L1_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L1')
-            sgrat_rays,L2_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L2')
-            
-        if apply_debye_waller == True:
-            sgrat_rays,debye_waller_vig_ind = ArcPerf.apply_debye_waller(sgrat_rays)
-
-        # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
-        thetas = anal.indAngle(sgrat_rays,normal = -cfpar.ngrats[j])*180/pi
-        
-        # Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
-        # function or given by the user by itself.
-        if isinstance(order_select,int):
-            order = ones(len(sgrat_rays[0]))*order_select
-        elif order_select is None:
-            # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
-            # an order of -1000 if the ray would be absorbed.
-            order,crit,order_cdf = ArcPerf.pick_order(geff_func,thetas,sgrat_rays[0]*10**6)
-            #pdb.set_trace()
-            nonabsorbed_ind = order != -1000
-            sgrat_rays = tran.vignette(sgrat_rays,ind = nonabsorbed_ind)
-            order = order[nonabsorbed_ind]
-            #pdb.set_trace()
-        else:
-            raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
-        
-        
-        # Now actually diffracting just the rays hitting the jth grating. If there are no rays hitting the
-        # jth grating, skip it.
-        
-        if len(sgrat_rays[0]) == 0:
-            sdiff_rays = sgrat_rays
-        else:
-            sdiff_rays = CATgratTrace(sgrat_rays,order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
-                                         cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j])
+    
         
         #pdb.set_trace()
         # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"
@@ -137,5 +104,153 @@ def GratPetalTrace(rays,order_select = None,apply_support_structure = True,apply
             diff_orders = hstack((diff_orders,order))
             grat_hit = hstack((grat_hit,ones(len(sdiff_rays[0]))*j))
     return diff_rays,diff_orders,grat_hit
+
+def GratFacetTrace(ray_object,facet):
+    # Getting the PyXFocus rays from the object.
+    init_rays = ray_object.yield_prays()
+    wavelengths = ray_object.wave
+    
+    v_ind_all = zeros(len(init_rays[1]),dtype = bool)
+    
+    # Performing the grating structure vignetting.
+    if facet.L1supp == True:
+        L1_vig_ind = ArcPerf.apply_support_vignetting(init_rays,support = 'L1')
+        v_ind_all = logical_or(v_ind_all,L1_vig_ind)
+    if facet.L2supp == True:
+        L2_vig_ind = ArcPerf.apply_support_vignetting(init_rays,support = 'L2')
+        v_ind_all = logical_or(v_ind_all,L2_vig_ind)
+    if facet.debye_waller == True:
+        debye_waller_vig_ind = ArcPerf.apply_debye_waller(init_rays)
+        v_ind_all = logical_or(v_ind_all,debye_waller_vig_ind)
+
+    # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
+    thetas = anal.indAngle(init_rays,normal = -facet.facet_coords.zhat)*180/pi
+    
+    # Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
+    # function or given by the user by itself.
+    if isinstance(facet.order_select,int):
+        order = ones(len(init_rays[0]))*facet.order_select
+    elif facet.order_select is None:
+        try:
+            # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
+            # an order of -1000 if the ray would be absorbed (i.e. doesn't transmit or diffracts outside 0th to 12th order.
+            order,crit,order_cdf = ArcPerf.pick_order(facet.geff_func,thetas,wavelengths*10**6)
+            absorbed_ind = order == -1000
+            v_ind_all = logical_or(v_ind_all,absorbed_ind)
+            #sgrat_rays = tran.vignette(sgrat_rays,ind = absorbed_ind)
+            #order = order[nonabsorbed_ind]
+        except:
+            print 'Likely issue: facet has auto order selection on, but no defined reflectivity function. Assess.'
+            pdb.set_trace()
+    else:
+        raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
+    
+    # Tracing the selected rays to the grating itself.
+    facet_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,facet.facet_coords)
+    surf.flat(facet_rays)
+
+    # Actually performing the diffraction on the grating.    
+    tran.grat(facet_rays,facet.period,order,wavelengths)
+    tran.reflect(facet_rays)
+    
+    # Now we apply the vignetting to all the PyXFocus rays, and undo the original
+    # coordinate transformation (i.e. undoing the transform to the facet_coords done
+    # at the start of this function)
+    raw_facet_rays = tran.vignette(facet_rays,ind = ~v_ind_all)
+    transmitted_orders = order[~v_ind_all]
+    theta_on_grat = thetas[~v_ind_all]
+    reref_facet_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_facet_rays,facet.facet_coords)
+    
+    # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
+    # setting the ray objects PyXFocus rays to be those traced here.
+    facet_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
+    facet_ray_object.set_prays(reref_facet_rays)
+    
+    # Adding two new attributes to our ray object:
+    # an order tracker and the angle of incidence on the grating.
+    facet_ray_object.order = transmitted_orders
+    facet_ray_object.theta_on_facet = theta_on_grat
+    
+    return facet_ray_object
+
+def CATPetalTrace(ray_object,facet_dict):
+    id_facet_for_rays(ray_object,facet_dict)
+    
+    facet_ray_dict = dict()
+    # Looping through the entire dictionary of XOUs. 
+    for key in facet_dict.keys():
+        ray_ind_this_facet = ray_object.facet_hit == facet_dict[key].facet_num
+        facet_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_facet)
+        facet_ray_dict[key] = GratFacetTrace(facet_ray_object,facet_dict[key])
+            
+    facet_ray_object = ArcRays.merge_ray_object_dict(facet_ray_dict)
+    return facet_ray_object
+
+#def GratPetalTrace(ray_object,facet_dict):
+#    id_facet_for_rays(ray_object,facet_dict)
+#    '''
+#    Inputs:
+#    order_select: an integer that sets what order is raytraced for all gratings within the petal. If 'None',
+#    the order selection is done by the grating efficiency function linked to the Arcus parameters.
+#    '''
+#    # If the order selection is specified by a grating efficiency function,
+#    # calculate the interpolation function once for all gratings to be traced (outside loop).
+#    if order_select == None:
+#        geff_func = ArcPerf.make_geff_interp_func()
+#    
+#    for j in range(cfpar.N_grats):
+#        # Selecting the rays hitting the jth grating and creating a separate selection of "single grating rays" -- sgrat_rays
+#        sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
+#                                                cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
+#        
+#        if apply_support_structure == True:
+#            sgrat_rays,L1_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L1')
+#            sgrat_rays,L2_vig_ind = ArcPerf.apply_support_vignetting(sgrat_rays,support = 'L2')
+#            
+#        if apply_debye_waller == True:
+#            sgrat_rays,debye_waller_vig_ind = ArcPerf.apply_debye_waller(sgrat_rays)
+#
+#        # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
+#        thetas = anal.indAngle(sgrat_rays,normal = -cfpar.ngrats[j])*180/pi
+#        
+#        # Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
+#        # function or given by the user by itself.
+#        if isinstance(order_select,int):
+#            order = ones(len(sgrat_rays[0]))*order_select
+#        elif order_select is None:
+#            # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
+#            # an order of -1000 if the ray would be absorbed.
+#            order,crit,order_cdf = ArcPerf.pick_order(geff_func,thetas,sgrat_rays[0]*10**6)
+#            #pdb.set_trace()
+#            nonabsorbed_ind = order != -1000
+#            sgrat_rays = tran.vignette(sgrat_rays,ind = nonabsorbed_ind)
+#            order = order[nonabsorbed_ind]
+#            #pdb.set_trace()
+#        else:
+#            raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
+#        
+#        
+#        # Now actually diffracting just the rays hitting the jth grating. If there are no rays hitting the
+#        # jth grating, skip it.
+#        
+#        if len(sgrat_rays[0]) == 0:
+#            sdiff_rays = sgrat_rays
+#        else:
+#            sdiff_rays = CATgratTrace(sgrat_rays,order,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
+#                                         cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j])
+#        
+#        #pdb.set_trace()
+#        # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"
+#        # rays that don't pass through a grating, so some care is required.
+#        if j == 0:
+#            diff_rays = sdiff_rays
+#            diff_orders = order
+#            grat_hit = ones(len(sdiff_rays[0]))*j
+#        else:
+#            diff_rays = hstack((diff_rays,sdiff_rays))
+#            diff_orders = hstack((diff_orders,order))
+#            grat_hit = hstack((grat_hit,ones(len(sdiff_rays[0]))*j))
+#    return diff_rays,diff_orders,grat_hit
+#
 
 

@@ -77,9 +77,9 @@ def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn
         pdb.set_trace()
         
     transmission = structure_data[0]
-    vig_locs = crit < transmission
-    structure_rays = tran.vignette(rays,ind = vig_locs)
-    return structure_rays,vig_locs
+    vig_locs = crit > transmission
+    #structure_rays = tran.vignette(rays,ind = vig_locs)
+    return vig_locs #structure_rays,vig_locs
 
 ########################################################################
 # Grating efficiency, order selection, and structure vignetting.
@@ -95,9 +95,9 @@ def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
     
     N = len(rays[0])
     crit = random.random(N)
-    vig_locs = crit < threshold
-    debyewaller_rays = tran.vignette(rays,ind = vig_locs)
-    return debyewaller_rays,vig_locs
+    vig_locs = crit > threshold
+    #debyewaller_rays = tran.vignette(rays,ind = vig_locs) return debyewaller_rays
+    return vig_locs
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     '''
@@ -176,11 +176,11 @@ def make_reflectivity_func(material,roughness):
     ref_func = RGI(points = (garray,earray),values = ref)
     return ref_func
 
-def ref_vignette_ind(rays,ref_func,ind = None):
+def ref_vignette_ind(rays,wave,ref_func,ind = None):
     if ind is not None:
         N = len(rays[0][ind])
         crit = random.random(N)
-        energy = (1240./10**6)/rays[0][ind]
+        energy = (1240./10**6)/wave[ind]
         graze = anal.grazeAngle(rays,ind = ind)*180/pi
         threshold = ref_func((graze,energy))
         # Finding the numbered indices within the selection of rays given by ind.
@@ -202,77 +202,23 @@ def ref_vignette_ind(rays,ref_func,ind = None):
 # Detector Absorption and QE
 ########################################################################
 
-def apply_detector_effect_vignetting(rays,eff_caldb_fn):
+def make_detector_effect_func(eff_caldb_fn):
     header,data = read_caldb_csvfile(eff_caldb_fn)
     wave,effect = (1.240/data[:,0]),data[:,1]
     interp_func = interp1d(wave,effect,kind = 'cubic')
-    
+    return interp_func
+
+def apply_detector_effect_vignetting(rays,wave,interp_func):
     N = len(rays[0])
     crit = random.random(N)
-    wave_nm = rays[0]*10**6
+    wave_nm = wave*10**6
     threshold = interp_func(wave_nm)
-    vig_locs = crit < threshold
-    effect_applied_rays = tran.vignette(rays,ind = vig_locs)
-    return effect_applied_rays,vig_locs
+    vig_locs = crit > threshold
+    #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
+    return vig_locs
 
-#################
-## Detector QE
-#
-#def make_det_qe_func(det_qe_file = det_qe_fn):
-#    qe_header,qe_data = read_caldb_csvfile(det_qe_file)
-#    wave,qe = (1.240/qe_data[:,0]),qe_data[:,1]
-#    qe_func = interp1d(wave,qe,kind = 'cubic')
-#    return qe_func
-#
-#def det_qe_vignette(rays,qe_func):
-#    N = len(rays[0])
-#    crit = random.random(N)
-#    wave_nm = rays[0]*10**6
-#    threshold = qe_func(wave_nm)
-#    vig_locs = crit < threshold
-#    qe_applied_rays = tran.vignette(rays,ind = vig_locs)
-#    return qe_applied_rays,vig_locs
-#
-#################
-## Detector Contamination
-#
-#def make_det_contam_func(det_contam_file = det_contam_fn):
-#    contam_header,contam_data = read_caldb_csvfile(det_contam_file)
-#    wave,contam = (1.240/contam_data[:,0]),contam_data[:,1]
-#    contam_func = interp1d(wave,contam,kind = 'cubic')
-#    return contam_func
-#
-#def det_contam_vignette(rays,contam_func):
-#    N = len(rays[0])
-#    crit = random.random(N)
-#    wave_nm = rays[0]*10**6
-#    threshold = contam_func(wave_nm)
-#    vig_locs = crit < threshold
-#    contam_applied_rays = tran.vignette(rays,ind = vig_locs)
-#    return contam_applied_rays,vig_locs
-#
-#################
-## Filter Absorption
-#
-#def make_filter_abs_func(filter_abs_file = opt_block_fn):
-#    filter_header,filter_data = read_caldb_csvfile(filter_abs_file)
-#    wave,filter_trans = (1.240/filter_data[:,0]),filter_data[:,1]
-#    filter_func = interp1d(wave,filter_trans,kind = 'cubic')
-#    return filter_func
-#
-#def filter_abs_vignette(rays,filter_func):
-#    N = len(rays[0])
-#    crit = random.random(N)
-#    wave_nm = rays[0]*10**6
-#    threshold = filter_func(wave_nm)
-#    vig_locs = crit < threshold
-#    filter_applied_rays = tran.vignette(rays,ind = vig_locs)
-#    return filter_applied_rays,vig_locs
-
-### Pick out the ray indices that have hit detectors "(det_ind == True)" and have
-### not been vignetted by this current operation "[qe_vig_list]".
-##good_ind = where(det_ind == True)[0][qe_vig_list]
-### Creating a new "good rays" vector of length input "rays"
-##det_ind = zeros(len(det_ind),bool)
-### Then setting the appropriate indices of the input "rays" not to be vignetted.
-##det_ind[good_ind] = True
+det_qe_interp_func = make_detector_effect_func(det_qe_fn)
+det_contam_interp_func = make_detector_effect_func(det_contam_fn)
+det_optblock_interp_func = make_detector_effect_func(opt_block_fn)
+det_uvblock_interp_func = make_detector_effect_func(uv_block_fn)
+det_simesh_interp_func = make_detector_effect_func(Si_mesh_block_fn)

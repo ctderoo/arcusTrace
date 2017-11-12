@@ -82,8 +82,13 @@ row_number = array([2,2,2,2,2,2,2,2,
                     8,8,8,8,8,8,8,8,
                     9,9,9,9,9,9,9,9])
 
+arcus_row_number = row_number - 1
+MM_number = repeat(arange(34),2)
+chan_number = ones(N_xous,dtype = int)
+
 xou_irs = row_param_construct(row_MM0_ir,row_MM1_ir)
 xou_ors = row_param_construct(row_MM0_or,row_MM1_or)
+xou_lengths = row_param_construct(row_MM0_length,row_MM1_length)
 xou_widths = row_param_construct(row_MM0_w,row_MM1_w)
 xou_cangles = repeat(mm_cangles,2)
 xou_zoffsets = zeros(N_xous)
