@@ -1,9 +1,13 @@
 from numpy import *
 import PyXFocus.transformations as tran
 import matplotlib.pyplot as plt
+import string
 
 import pdb
 from scipy.optimize import root
+
+import arcusTrace.arcusPerformance as ArcPerf
+import arcusTrace.arcusUtilities as ArcUtil
 
 ############################################
 
@@ -17,6 +21,14 @@ class coordinate_system:
         self.zhat = zhat
 
 instrument_coord_sys = coordinate_system(0.,0.,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
+OC1_coords = coordinate_system(300.,2.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
+OC2_coords = coordinate_system(300.,-7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
+OC3_coords = coordinate_system(-300.,-2.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
+OC4_coords = coordinate_system(-300.,7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
+
+#OC2_coords = coordinate_system(300.,-7.5,0.,array([1.,0.,0.]),array([0.,-1.,0.]),array([0.,0.,1.]))
+#OC3_coords = coordinate_system(-300.,-2.5,0.,array([-1.,0.,0.]),array([0.,-1.,0.]),array([0.,0.,1.]))
+#OC4_coords = coordinate_system(-300.,7.5,0.,array([-1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 
 ############################################
 
@@ -36,6 +48,7 @@ class xou:
         self.sp_space = 0.100
         self.primary_length = plength
         self.secondary_length = slength
+        self.clocking_angle = clock_ang
         
         # XOU-specific coordinate system, as specified from the instrument coordinate system.
         self.xou_coords = coordinate_system(0.,0.,12000.,array([cos(clock_ang),-sin(clock_ang),0.]),array([sin(clock_ang),cos(clock_ang),0.,]),array([0.,0.,1.,]))
@@ -91,9 +104,12 @@ class facet(object):
 
     def set_chan(self, chan_id):
         self.chan_id = chan_id
+        
+    def set_SPO_MM_num(self, SPO_MM_num):
+        self.SPO_MM_num = SPO_MM_num
     
-    def set_window(self,window_num):
-        self.window_num = window_num
+    def set_SPO_row_num(self,SPO_row_num):
+        self.SPO_row_num = SPO_row_num
     
     def compute_facet_orientation(self,xloc,yloc,zloc):
         # First, pointing the gratings towards the telescope focus -- setting normal incidence while being positioned on the Rowland torus.
@@ -147,26 +163,192 @@ class ccd_detector(object):
     def add_det_effect(self,filter_name,filter_fn):
         self.det_effects.append(det_filter(filter_name,filter_fn))
 
+############################################
+# Entire channel class here.
 #
-#det_xstart = 540
-#det_xstep = 2048*0.024 + 0.5
-#det_xlocs = -(det_xstart + arange(8)*det_xstep)
-#det_RoC = mean(zgrats)*2
-#
-#def define_det_array(xlocs,RoC):
-#    '''
-#    From the channel origin, explicitly defines the detector array in the plane y = 0
-#    from the x dimension locations specified. Number of detectors is given by the length
-#    of the location array.
-#    ''' 
-#    zlocs = RoC - sqrt(RoC**2 - xlocs**2)
-#    locs = array([array([xlocs[i],0,zlocs[i]]) for i in range(len(xlocs))])
-#    
-#    normals = array([array([-xlocs[i],0,RoC - zlocs[i]])/RoC for i in range(len(xlocs))])
-#    cross_disp_dir = array([array([0,1,0]) for i in range(len(xlocs))])
-#    disp_dir = array([cross(cross_disp_dir[i],normals[i]) for i in range(len(xlocs))])
-#    
-#    det_vecs = array([vstack((disp_dir[i],cross_disp_dir[i],normals[i])) for i in range(len(xlocs))])
-#    return locs,det_vecs
-#
-#det_locs,det_vecs = define_det_array(det_xlocs,det_RoC)
+def read_caldb_csvfile(fn):
+    '''
+    Read in the .csv files from the CALDB format.
+    Input:
+    fn -- filename to be read in
+    Output:
+    header -- the column labels as strings
+    data -- the contents of the csvfile as a float.
+    '''
+    file_contents = genfromtxt(fn,comments = '#',dtype = str)
+    header,data = file_contents[0],file_contents[1:]
+    return header,data
+
+class ArcusChannel(object):
+    ''' Default class variables '''
+    default_xou_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_SPO_XOU_Specs_Rev1p0_171112.csv'
+    default_xou_ref_pointer = '/Users/Casey/Software/ReflectLib/SingleLayerMirror_SiO2Layer_SiSubstrate1p0nmThick_Rough04AngRMS_X-rayRefData.npy'
+    default_facet_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_CATGrating_Facets_Specs_Rev1p0_171112.csv'
+    default_diff_eff_pointer = '/Users/Casey/Software/Bitbucket/caldb-inputdata/gratings/efficiency.csv'
+    
+    def __init__(self,chan_num, chan_coords = OC1_coords,xou_pointer = default_xou_pointer,facet_pointer = default_facet_pointer,\
+               xou_ref_pointer = default_xou_ref_pointer,order_select = None, diff_eff_pointer = default_diff_eff_pointer):
+
+        self.chan_num = chan_num
+        self.xou_pointer = xou_pointer
+        self.facet_pointer = facet_pointer
+        self.xou_ref_pointer = xou_ref_pointer
+        self.order_select = None
+        self.diff_eff_pointer = diff_eff_pointer
+        
+        self.set_reflections(chan_num)
+        self.chan_xous = self.set_chan_xous(xou_pointer,xou_ref_pointer)
+        self.chan_facets = self.set_chan_facets(facet_pointer,order_select,diff_eff_pointer)
+        self.chan_coords = chan_coords
+    
+    def set_reflections(self,chan_num):
+        self.refx = False
+        self.refy = False
+        
+        if logical_or(chan_num == 3,chan_num == 4):
+            self.refx = True
+        if logical_or(chan_num == 2,chan_num == 3):
+            self.refy = True
+            
+    def set_chan_xous(self,xou_pointer,xou_ref_pointer):
+        xou_header,xou_data = read_caldb_csvfile(xou_pointer)
+        if xou_ref_pointer is not None:
+            ref_func = ArcPerf.make_reflectivity_func(xou_ref_pointer)
+        xou_header = xou_header.split(",")
+        
+        # Keys needed to initialize the Arcus XOUs.
+        needed_init_keys = ['xou_num','chan_id','MM_num','row_num','inner_radius','outer_radius','azwidth','clocking_angle','primary_length','secondary_length']
+        dtype_init_keys = [int,int,int,int,float,float,float,float,float,float]
+        def selector(values,ind,dtypes = dtype_init_keys):
+            return dtypes[ind](values[ind])
+        
+        ind = [xou_header.index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
+        
+        chan_xous = dict()
+        for i in range(len(xou_data)):
+            xou_chars = xou_data[i].split(",")
+            xou_num,chan_id,MM_num,row_num,inner_radius,outer_radius,azwidth,clock_ang,plength,slength = [selector(xou_chars,ind[j]) for j in range(len(ind))]
+            chan_xous['XOU' + str(xou_num)] = xou(xou_num,inner_radius,outer_radius,azwidth,plength,slength,clock_ang)
+            chan_xous['XOU' + str(xou_num)].set_row(row_num)
+            chan_xous['XOU' + str(xou_num)].set_chan(chan_id)
+            chan_xous['XOU' + str(i)].set_MM(MM_num)
+            if xou_ref_pointer is not None:
+                chan_xous['XOU' + str(i)].set_ref_func(ref_func)
+        
+        return chan_xous
+    
+    def set_chan_facets(self,facet_pointer,order_select,diff_eff_pointer):
+        facet_header,facet_data = read_caldb_csvfile(facet_pointer)
+        if order_select is None:
+            geff_func = ArcPerf.make_geff_interp_func(diff_eff_pointer)
+        facet_header = facet_header.split(",")
+        
+        # Keys needed to initialize the Arcus XOUs.
+        needed_init_keys = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
+                            'DispNX','DispNY','DispNZ','GBarNX','GBarNY','GBarNZ','NormNX','NormNY','NormNZ','xsize','ysize','period']
+        dtype_init_keys = [int,int,int,int,float,float,float,\
+                           float,float,float,float,float,float,float,float,float,float,float,float]
+        
+        def selector(values,ind,dtypes = dtype_init_keys):
+            return dtypes[ind](values[ind])
+        
+        ind = [facet_header.index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
+        
+        chan_facets = dict()
+        for i in range(len(facet_data)):
+            facet_chars = facet_data[i].split(",")
+            facet_num,chan_id,SPO_MM_num,SPO_row_num,X,Y,Z,\
+                            DispNX,DispNY,DispNZ,GBarNX,GBarNY,GBarNZ,NormNX,NormNY,NormNZ,xsize,ysize,period= [selector(facet_chars,ind[j]) for j in range(len(ind))]
+            facet_coords_system = coordinate_system(X,Y,Z,array([DispNX,DispNY,DispNZ]),array([GBarNX,GBarNY,GBarNZ]),array([NormNX,NormNY,NormNZ]))
+            
+            chan_facets['F' + str(facet_num)] = facet(facet_num,X,Y,Z)
+            chan_facets['F' + str(facet_num)].facet_coords = facet_coords_system
+            
+            chan_facets['F' + str(facet_num)].set_chan(chan_id)
+            chan_facets['F' + str(facet_num)].set_SPO_MM_num(SPO_MM_num)
+            chan_facets['F' + str(facet_num)].set_SPO_row_num(SPO_row_num)
+            chan_facets['F' + str(facet_num)].order_select = order_select
+            if order_select is None:
+                chan_facets['F' + str(facet_num)].set_geff_func(geff_func)
+        
+        return chan_facets
+    
+    def rays_from_chan_to_instrum_coords(self, ray_object,inverse = False):
+        prays = ray_object.yield_prays()
+        moved_prays = ArcUtil.chan_to_instrum_transform(prays,self.chan_coords,self.refx,self.refy,inverse = inverse)
+        ray_object.set_prays(moved_prays)    
+    
+class ArcusFPA(object):
+    ''' Class wide variables go here'''
+    default_det_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev1p0_171112.csv'
+
+    bitbucket_path = '/Users/Casey/Software/Bitbucket/caldb-inputdata'
+    default_det_qe_fn = bitbucket_path + '/detectors/qe.csv'
+    default_det_contam_fn = bitbucket_path + '/detectors/contam.csv'
+    default_opt_block_fn = bitbucket_path + '/filters/opticalblocking.csv'
+    default_uv_block_fn = bitbucket_path + '/filters/sifilter.csv'
+    default_Si_mesh_block_fn = bitbucket_path + '/filters/uvblocking.csv'
+
+    #det_qe_interp_func = ArcPerf.make_detector_effect_func(det_qe_fn)
+    #det_contam_interp_func = ArcPerf.make_detector_effect_func(det_contam_fn)
+    #det_optblock_interp_func = ArcPerf.make_detector_effect_func(opt_block_fn)
+    #det_uvblock_interp_func = ArcPerf.make_detector_effect_func(uv_block_fn)
+    #det_simesh_interp_func = ArcPerf.make_detector_effect_func(Si_mesh_block_fn)
+
+    def __init__(self,fpa_coords = instrument_coord_sys,det_pointer = default_det_pointer,
+                 det_qe_fn = default_det_qe_fn,det_contam_fn = default_det_contam_fn,opt_block_fn = default_opt_block_fn, uv_block_fn = default_uv_block_fn,Si_mesh_block_fn = default_Si_mesh_block_fn):
+        '''
+        Turn any of the paths to None to turn off these effects.
+        '''
+        self.fpa_dets = self.set_dets(det_pointer)
+        self.fpa_coords = instrument_coord_sys
+
+        if det_qe_fn is not None:
+            det_qe_interp_func = ArcPerf.make_detector_effect_func(det_qe_fn)
+            self.set_det_effect(det_qe_interp_func,'QE')
+        if det_contam_fn is not None:
+            det_contam_interp_func = ArcPerf.make_detector_effect_func(det_contam_fn)
+            self.set_det_effect(det_contam_interp_func,'Contamination')
+        if opt_block_fn is not None:
+            det_optblock_interp_func = ArcPerf.make_detector_effect_func(opt_block_fn)
+            self.set_det_effect(det_optblock_interp_func,'Optical Blocking')
+        if uv_block_fn is not None:
+            det_uvblock_interp_func = ArcPerf.make_detector_effect_func(uv_block_fn)
+            self.set_det_effect(det_uvblock_interp_func,'UV Blocking')
+        if Si_mesh_block_fn is not None:
+            det_simesh_interp_func = ArcPerf.make_detector_effect_func(Si_mesh_block_fn)
+            self.set_det_effect(det_simesh_interp_func,'Mesh Blocking')
+            
+    def set_dets(self,det_pointer):
+        det_header,det_data = read_caldb_csvfile(det_pointer)
+        det_header = det_header.split(",")
+        
+        # Keys needed to initialize the Arcus XOUs.
+        needed_init_keys = ['ccd_num','X','Y','Z',\
+                            'XHat_NX','XHat_NY','XHat_NZ','YHat_NX','YHat_NY','YHat_NZ','ZHat_NX','ZHat_NY','ZHat_NZ','xwidth','ywidth','xpix','ypix','xpixsize','ypixsize']
+        dtype_init_keys = [int,float,float,float,\
+                           float,float,float,float,float,float,float,float,float,float,float,int,int,float,float]
+        
+        def selector(values,ind,dtypes = dtype_init_keys):
+            return dtypes[ind](values[ind])
+        
+        ind = [det_header.index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
+        
+        fpa_ccds = dict()
+        num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
+        
+        for i in range(len(det_data)):
+            det_chars = det_data[i].split(",")
+            
+            ccd_num,X,Y,Z,\
+            XHat_NX,XHat_NY,XHat_NZ,YHat_NX,YHat_NY,YHat_NZ,ZHat_NX,ZHat_NY,ZHat_NZ,\
+            xwidth,ywidth,xpix,ypix,xpixsize,ypixsize = [selector(det_chars,ind[j]) for j in range(len(ind))]
+            
+            fpa_ccds['CCD_' + num2alpha[i]] = ccd_detector(ccd_num,xpix,ypix,X,Y,Z,array([XHat_NX,XHat_NY,XHat_NZ]),array([YHat_NX,YHat_NY,YHat_NZ]),array([ZHat_NX,ZHat_NY,ZHat_NZ]))
+        return fpa_ccds
+
+    def set_det_effect(self,det_effect_func, det_effect_name = 'N/A'):
+        for key in self.fpa_dets.keys():
+            self.fpa_dets[key].add_det_effect(det_effect_name,det_effect_func)
+    
+    

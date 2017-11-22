@@ -38,8 +38,42 @@ def undo_ray_transform_to_coordinate_system(rays,coord_sys):
     tran.transform(transform_rays,0,0,0,0,-a2,0)
     tran.transform(transform_rays,0,0,0,-a1,0,0)
     tran.transform(transform_rays,-coord_sys.x,-coord_sys.y,-coord_sys.z,0,0,0)
+    #pdb.set_trace()
     return [asarray(transform_rays)[i] for i in range(len(rays))]
 
+def chan_to_instrum_transform(transform_rays,coord_sys,refx = False,refy = False,inverse = False):
+    rays = copy_rays(transform_rays)
+    ref_mat = tran.tr.identity_matrix()[:3,:3]
+    
+    if inverse == True:
+        rays = do_ray_transform_to_coordinate_system(rays,coord_sys)
+    
+        if refy == True:
+            ref_mat = dot(ref_mat,tran.tr.reflection_matrix(array([0,0,0]),array([0,1,0]))[:3,:3])
+        if refx == True:
+            ref_mat = dot(ref_mat,tran.tr.reflection_matrix(array([0,0,0]),array([1,0,0]))[:3,:3])
+            
+        locs,vecs = vstack((rays[1],rays[2],rays[3])),vstack((rays[4],rays[5],rays[6]))
+        new_locs = dot(ref_mat,locs)
+        new_vecs = dot(ref_mat,vecs)
+        rays[1],rays[2],rays[3],rays[4],rays[5],rays[6] = new_locs[0],new_locs[1],new_locs[2],new_vecs[0],new_vecs[1],new_vecs[2]
+        
+        moved_rays = copy_rays(rays)
+    
+    else:
+        if refy == True:
+            ref_mat = dot(ref_mat,tran.tr.reflection_matrix(array([0,0,0]),array([0,1,0]))[:3,:3])
+        if refx == True:
+            ref_mat = dot(ref_mat,tran.tr.reflection_matrix(array([0,0,0]),array([1,0,0]))[:3,:3])
+            
+        locs,vecs = vstack((rays[1],rays[2],rays[3])),vstack((rays[4],rays[5],rays[6]))
+        new_locs = dot(ref_mat,locs)
+        new_vecs = dot(ref_mat,vecs)
+        rays[1],rays[2],rays[3],rays[4],rays[5],rays[6] = new_locs[0],new_locs[1],new_locs[2],new_vecs[0],new_vecs[1],new_vecs[2]
+        
+        moved_rays = undo_ray_transform_to_coordinate_system(rays,coord_sys)
+    return moved_rays
+    
 ####################################################################
 # Utility-related functions.
 

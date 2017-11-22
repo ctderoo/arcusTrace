@@ -145,13 +145,17 @@ def GratFacetTrace(ray_object,facet):
     else:
         raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
     
-    # Tracing the selected rays to the grating itself.
-    facet_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,facet.facet_coords)
-    surf.flat(facet_rays)
-
-    # Actually performing the diffraction on the grating.    
-    tran.grat(facet_rays,facet.period,order,wavelengths)
-    tran.reflect(facet_rays)
+    # If there are rays hitting the grating, do the transform and diffraction. Otherwise, pass the
+    # the empty ray object.
+    try:
+        # Tracing the selected rays to the grating itself.
+        facet_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,facet.facet_coords)
+        surf.flat(facet_rays)
+        # Actually performing the diffraction on the grating.    
+        tran.grat(facet_rays,facet.period,order,wavelengths)
+        tran.reflect(facet_rays)
+    except:
+        facet_rays = init_rays
     
     # Now we apply the vignetting to all the PyXFocus rays, and undo the original
     # coordinate transformation (i.e. undoing the transform to the facet_coords done
@@ -159,8 +163,14 @@ def GratFacetTrace(ray_object,facet):
     raw_facet_rays = tran.vignette(facet_rays,ind = ~v_ind_all)
     transmitted_orders = order[~v_ind_all]
     theta_on_grat = thetas[~v_ind_all]
-    reref_facet_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_facet_rays,facet.facet_coords)
     
+    # If there are rays left, transform them back. If there are no more rays, don't transform -- just use the blank ray object.
+    try:
+        reref_facet_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_facet_rays,facet.facet_coords)
+    except:
+        print 'No rays on the facet -- skipping...'
+        reref_facet_rays = raw_facet_rays
+        
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.
     facet_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)

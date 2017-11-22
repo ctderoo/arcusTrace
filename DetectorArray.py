@@ -61,11 +61,13 @@ def ccdTrace(ray_object,ccd):
         vig_list = ArcPerf.apply_detector_effect_vignetting(init_rays,wavelength,ccd.det_effects[i].filter_func)
         v_ind_all = logical_or(v_ind_all,vig_list)
     
-    ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
-    surf.flat(ccd_rays)
-    
-    raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
-    reref_ccd_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_ccd_rays,ccd.ccd_coords)
+    try: 
+        ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
+        surf.flat(ccd_rays)
+        raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
+        reref_ccd_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_ccd_rays,ccd.ccd_coords)
+    except:
+        reref_ccd_rays = ccd_rays
     
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.

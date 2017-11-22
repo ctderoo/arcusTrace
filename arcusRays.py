@@ -2,7 +2,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 import os
 import pdb
-import pickle
+import pickle,cPickle
 import copy
 
 import PyXFocus.sources as source
@@ -66,6 +66,16 @@ class ArcusRays:
             new_object.__dict__[key] = self.__dict__[key][ind]
         return new_object
     
+    def pickle_me(self, pickle_file):
+        new_object = copy.deepcopy(self)
+        keys = new_object.__dict__.keys()
+        attribs = []
+        attribs.append(keys)
+        attribs.append([new_object.__dict__[key] for key in keys])
+        f = open(pickle_file,'wb')
+        pickle.dump(attribs,f)
+        f.close()
+
 def merge_ray_object_dict(ray_object_dict):
     merged_object = copy.deepcopy(ray_object_dict[ray_object_dict.keys()[0]])
     for ray_attrib in merged_object.__dict__.keys():
@@ -80,3 +90,13 @@ def make_channel_source(num_rays,wave = 1.24e-6,xextent = 450.,yextent = 570.):
     wave = zeros(num_rays) + wave
     ray_object = ArcusRays(rays,wave)
     return ray_object
+
+def load_ray_object_from_pickle(pickle_file):
+    blank_ray_object = make_channel_source(1)
+    f = open(pickle_file,'rb')
+    attribs = cPickle.load(f)
+    f.close()
+    keys = attribs[0]
+    for i in range(len(keys)):
+        blank_ray_object.__dict__[keys[i]] = attribs[1][i]
+    return blank_ray_object

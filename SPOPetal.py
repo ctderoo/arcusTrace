@@ -105,7 +105,7 @@ def XOUTrace(ray_object,xou):
     # Add normalized scatter to the direction cosines if desired.
     if xou.scatter == True:
         int_rays[4] = int_rays[4] + random.normal(scale=xou.dispdir_scatter_val,size=shape(int_rays)[1])
-        int_rays[5] = int_rays[5] + random.normal(scale=xou.dispdir_scatter_val,size=shape(int_rays)[1])
+        int_rays[5] = int_rays[5] + random.normal(scale=xou.crossdispdir_scatter_val,size=shape(int_rays)[1])
         int_rays[6] = -sqrt(1.- int_rays[5]**2- int_rays[4]**2)
     
     # Now we apply the vignetting to all the PyXFocus rays, and undo the original

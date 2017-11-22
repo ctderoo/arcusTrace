@@ -2,6 +2,7 @@ from numpy import *
 import PyXFocus.transformations as tran
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+import copy
 
 import pdb
 from scipy.optimize import root
@@ -238,4 +239,16 @@ def define_det_array(xlocs,RoC):
     det_vecs = array([vstack((disp_dir[i],cross_disp_dir[i],normals[i])) for i in range(len(xlocs))])
     return locs,det_vecs
 
-det_locs,det_vecs = define_det_array(det_xlocs,det_RoC)
+s1det_locs,s1det_vecs = define_det_array(det_xlocs,det_RoC)
+s2det_locs,s2det_vecs = define_det_array(det_xlocs - 5,det_RoC)
+
+#s1det_locs,s2det_locs = copy.deepcopy(s1det_locs),copy.deepcopy(s2det_locs)
+#s1det_vecs,s2det_vecs = copy.deepcopy(s1det_vecs),copy.deepcopy(s2det_vecs)
+
+s1det_locs[:,0] = s1det_locs[:,0] + 300
+s2det_locs[:,0] = -(s2det_locs[:,0] + 300)
+
+flip_matrix = array([[1,1,-1],[1,1,1],[-1,1,1]])
+s2det_vecs = asarray([flip_matrix*s2det_vecs[i] for i in range(len(s2det_vecs))])
+
+instrum_det_locs,instrum_det_vecs = vstack((s1det_locs,s2det_locs)),vstack((s1det_vecs,s2det_vecs))
