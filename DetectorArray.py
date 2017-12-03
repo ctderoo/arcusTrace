@@ -19,10 +19,21 @@ import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 ####################################################################
 # Detector-related functions.
 
+#def check_size_old(rays,phy_size):
+#    x,y = rays[1],rays[2]
+#    xcond = logical_and(rays[1] > -phy_size[0]/2,rays[1] < phy_size[0]/2)
+#    ycond = logical_and(rays[2] > -phy_size[1]/2,rays[2] < phy_size[1]/2)
+#    tcond = logical_and(xcond,ycond)
+#    return tcond
+    
 def check_size(rays,phy_size):
+    '''
+    Checking that a given ray will hit a CCD given the coordinate transformation and the physical size
+    of the CCD.
+    '''
     x,y = rays[1],rays[2]
-    xcond = logical_and(rays[1] > -phy_size[0]/2,rays[1] < phy_size[0]/2)
-    ycond = logical_and(rays[2] > -phy_size[1]/2,rays[2] < phy_size[1]/2)
+    xcond = logical_and(rays[1] > 0,rays[1] < phy_size[0])
+    ycond = logical_and(rays[2] > 0,rays[2] < phy_size[1])
     tcond = logical_and(xcond,ycond)
     return tcond
 
@@ -44,7 +55,7 @@ def ccdTrace(ray_object,ccd):
     Propagate rays to a single CCD.
     Inputs:
     rays -- rays to be propagated.
-    loc -- 3D position of the center of the detector array.
+    loc -- 3D position of the lower left corner (pixel 0,0) of the detector array.
     norm -- normal of the CCD face
     ccd_size -- X,Y dimensions of the CCD.
     Outputs:

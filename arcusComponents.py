@@ -146,7 +146,8 @@ class det_filter(object):
 class ccd_detector(object):
     def __init__(self,ccd_num,xpix,ypix,xcent,ycent,zcent,xhat,yhat,zhat):
         '''
-        xhat and zhat are the dispersion direction and the CCD normal respectively.
+        xhat and zhat are the dispersion direction and the CCD normal respectively. Note that the
+        coordinate system is given for the corner of the CCD.
         '''
         self.ccd_num = ccd_num
         
@@ -280,7 +281,7 @@ class ArcusChannel(object):
     
 class ArcusFPA(object):
     ''' Class wide variables go here'''
-    default_det_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev1p0_171112.csv'
+    default_det_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev2p0_171201.csv'
 
     bitbucket_path = '/Users/Casey/Software/Bitbucket/caldb-inputdata'
     default_det_qe_fn = bitbucket_path + '/detectors/qe.csv'
@@ -288,12 +289,6 @@ class ArcusFPA(object):
     default_opt_block_fn = bitbucket_path + '/filters/opticalblocking.csv'
     default_uv_block_fn = bitbucket_path + '/filters/sifilter.csv'
     default_Si_mesh_block_fn = bitbucket_path + '/filters/uvblocking.csv'
-
-    #det_qe_interp_func = ArcPerf.make_detector_effect_func(det_qe_fn)
-    #det_contam_interp_func = ArcPerf.make_detector_effect_func(det_contam_fn)
-    #det_optblock_interp_func = ArcPerf.make_detector_effect_func(opt_block_fn)
-    #det_uvblock_interp_func = ArcPerf.make_detector_effect_func(uv_block_fn)
-    #det_simesh_interp_func = ArcPerf.make_detector_effect_func(Si_mesh_block_fn)
 
     def __init__(self,fpa_coords = instrument_coord_sys,det_pointer = default_det_pointer,
                  det_qe_fn = default_det_qe_fn,det_contam_fn = default_det_contam_fn,opt_block_fn = default_opt_block_fn, uv_block_fn = default_uv_block_fn,Si_mesh_block_fn = default_Si_mesh_block_fn):
