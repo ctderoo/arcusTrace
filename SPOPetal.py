@@ -51,21 +51,14 @@ def XOUTrace(ray_object,xou):
     """
 
     # Generating an internal ray object to play nicely with PyXFocus routines.
-    #times = []
-    #times.append(time.time())
-    
     input_rays = ray_object.yield_prays()
     wavelength = ray_object.wave
     int_rays = ArcUtil.do_ray_transform_to_coordinate_system(input_rays,xou.xou_coords)
     
-    #times.append(time.time())
     surf.flat(int_rays)
-    #times.append(time.time())
     
     ray_radius = sqrt(int_rays[1]**2+int_rays[2]**2)
-    #times.append(time.time())
     v_ind_all = zeros(len(int_rays[1]),dtype = bool)
-    #times.append(time.time())
     # Bookkeeping variables in case checking how many rays get vignetted (and through what process) is necessary.
     geo_v,ref_v = 0,0
     
@@ -100,7 +93,6 @@ def XOUTrace(ray_object,xou):
             v_ind_ref = ArcPerf.ref_vignette_ind(int_rays,wavelength,xou.ref_func,ind = tr_ind)
             ref_v = ref_v + sum(v_ind_ref)
             v_ind_all = logical_or(v_ind_ref,v_ind_all)
-    #times.append(time.time())
 
     # Add normalized scatter to the direction cosines if desired.
     if xou.scatter == True:

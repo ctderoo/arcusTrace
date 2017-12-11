@@ -21,8 +21,8 @@
 # - {name: xpixsize,unit: mm,datatype: float64}
 # - {name: ypixsize,unit: mm,datatype: float64}
 # Author: Casey DeRoo
-# ORIGFILE: arcusTrace.ParamFiles.arcus_params_rev1p8.py
-# Description: Specifications of DeRoo Focal Plane, Referenced to Global Instrument Coordinate System
+# ORIGFILE: focplane.fits, pushed 12/11/17
+# Description: Specifications of Moritz Optimized Focal Plane, Referenced to Global Instrument Coordinate System
 ccd_num,X,Y,Z,XHat_NX,XHat_NY,XHat_NZ,YHat_NX,YHat_NY,YHat_NZ,ZHat_NX,ZHat_NY,ZHat_NZ,xwidth,ywidth,xpix,ypix,xpixsize,ypixsize
 1,-657.725,-12.468,28.8661,0.994314,0.0,-0.10649,-0.0,1.0,0.0,0.10649,0.0,0.994314,49.392000000000003,24.936,2058,1039,0.024,0.024
 2,-608.116,-12.468,23.5551,0.995172,0.0,-0.0981434,-0.0,1.0,0.0,0.0981434,0.0,0.995172,49.392000000000003,24.936,2058,1039,0.024,0.024

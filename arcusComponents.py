@@ -183,7 +183,7 @@ def read_caldb_csvfile(fn):
 class ArcusChannel(object):
     ''' Default class variables '''
     default_xou_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_SPO_XOU_Specs_Rev1p0_171112.csv'
-    default_xou_ref_pointer = '/Users/Casey/Software/ReflectLib/SingleLayerMirror_SiO2Layer_SiSubstrate1p0nmThick_Rough04AngRMS_X-rayRefData.npy'
+    default_xou_ref_pointer = '/Users/Casey/Software/ReflectLib/MLMirror_L1SiC_L2Ir_SubSi_L1Thick_6p0L2Thick_10p0_Rough4p00AngRMS_X-rayRefData.npy'
     default_facet_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_CATGrating_Facets_Specs_Rev1p0_171112.csv'
     default_diff_eff_pointer = '/Users/Casey/Software/Bitbucket/caldb-inputdata/gratings/efficiency.csv'
     
@@ -281,7 +281,7 @@ class ArcusChannel(object):
     
 class ArcusFPA(object):
     ''' Class wide variables go here'''
-    default_det_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev2p0_171201.csv'
+    default_det_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev3p0_171211.csv'
 
     bitbucket_path = '/Users/Casey/Software/Bitbucket/caldb-inputdata'
     default_det_qe_fn = bitbucket_path + '/detectors/qe.csv'
