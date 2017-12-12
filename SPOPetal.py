@@ -122,10 +122,11 @@ def SPOPetalTrace(ray_object,xou_dict):
     for key in xou_dict.keys():
         ray_ind_this_xou = ray_object.xou_hit == xou_dict[key].xou_num
         xou_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_xou)
-        try: 
-            petal_ray_dict[key] = XOUTrace(xou_ray_object,xou_dict[key])
-        except:
-            pdb.set_trace()
+        if size(xou_ray_object.x) != 0:
+            try:
+                petal_ray_dict[key] = XOUTrace(xou_ray_object,xou_dict[key])
+            except:
+                continue
             
     petal_ray_object = ArcRays.merge_ray_object_dict(petal_ray_dict)
     return petal_ray_object

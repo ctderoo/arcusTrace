@@ -108,8 +108,9 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     geff_func -- a lookup function as a function of incidence angle, wavelength, and order.
     '''
     geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    wave,theta,order = unique(geff_data[:,0]),unique(geff_data[:,1]),range(0,13,1)
+    
     # Hardcoding for now.
-    wave,theta,order = arange(0.7,5.05,0.05),arange(0.8,2.85,0.05),range(0,13,1)
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func
@@ -173,36 +174,6 @@ def make_reflectivity_func(pointer):
     ref_func = RGI(points = (garray,earray),values = ref)
     return ref_func
 
-#def return_ref_data(material,roughness):#,mirror_type = 'Thick',layer_thickness = 1.0):
-#    '''
-#    Inputs:
-#    material -- string specifying formula as given to CXRO
-#    roughness -- integer specifying coating roughness in Angstroms
-#    Outputs:
-#    ref -- reflectivity of the specified thick mirror as a function of energy and graze angle
-#    energy -- energy (eV) matrix matched to the reflectivity
-#    graze -- graze angle (degrees) matrix matched to the reflectivity
-#    '''
-#    #if mirror_type = 'Thick':
-#    fn = glob.glob(reflib_directory + '/*' + material + '*' + 'Rough' + "{0:02d}".format(roughness) + '*.npy')
-#    #if mirror_type = 'SingleLayer':
-#    #    fn = glob.glob(reflib_directory + '/SingleLayerMirror' + material + '*' + '{:3.1f}'.format(layer_thickness).replace('.','p') + '*Rough' + "{0:02d}".format(roughness) + '*.npy')
-#    if len(fn) != 1:
-#        raise PrintError('Reflectivity file is not found uniquely - please check inputs.')
-#        pdb.set_trace()
-#    data = load(fn[0])
-#    energy,ref,graze = data[:,:,0],data[:,:,1],data[:,:,2]
-#    return energy,ref,graze
-#
-#def make_reflectivity_func(material,roughness):
-#    '''
-#    '''
-#    energy,ref,graze = return_ref_data(material,roughness)
-#    earray = energy[0]
-#    garray = graze[:,0]
-#    ref_func = RGI(points = (garray,earray),values = ref)
-#    return ref_func
-
 def ref_vignette_ind(rays,wave,ref_func,ind = None):
     if ind is not None:
         N = len(rays[0][ind])
@@ -243,9 +214,3 @@ def apply_detector_effect_vignetting(rays,wave,interp_func):
     vig_locs = crit > threshold
     #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
     return vig_locs
-
-#det_qe_interp_func = make_detector_effect_func(det_qe_fn)
-#det_contam_interp_func = make_detector_effect_func(det_contam_fn)
-#det_optblock_interp_func = make_detector_effect_func(opt_block_fn)
-#det_uvblock_interp_func = make_detector_effect_func(uv_block_fn)
-#det_simesh_interp_func = make_detector_effect_func(Si_mesh_block_fn)

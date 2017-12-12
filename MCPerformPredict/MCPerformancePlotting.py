@@ -16,6 +16,9 @@ import arcusTrace.CATPetal as ArcCAT
 import arcusTrace.DetectorArray as ArcDet
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
+import arcusTrace.arcusRays as ArcRays
+
+#import arcusTrace.MCPerformPredict.MCPerformanceComputation as ArcMCComp
 
 home_directory = os.getcwd()
 figure_directory = home_directory + '/ResultFigures'
@@ -37,6 +40,11 @@ def calculate_avg_res(wavelengths,orders,ChanRes,ChanEA):
             pass
     return avg_res
 
+def compute_perf_by_orders(chan_rays,convert_factor,all_orders = range(0,13,1)):
+    res = asarray([compute_order_res(chan_rays,order) for order in all_orders])
+    ea = asarray([compute_order_EA(chan_rays,order,convert_factor) for order in all_orders])
+    return res,ea
+
 def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResPlot_Uncoated.png'):
     #####################################
     # Resolving Power Plot.
@@ -51,7 +59,7 @@ def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResP
     plt.close()
     os.chdir(home_directory)
 
-def plot_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_EffAreaByOrder_Uncoated.png',coating_description = 'Uncoated (1 nm SiO2, 4 Angstrom Roughness, Si substrate)'):
+def plot_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = 'default.png',title_description = 'description_error'):
     ea_all_channels = sum(ChanEA,axis = 0)
     spectral_ea = sum(ea_all_channels[:,1:],axis = 1)
     
@@ -83,7 +91,7 @@ def plot_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_EffAr
     # Labeling the plot, and setting the ticks consistently. 
     plt.xlabel('Wavelength (Angstroms)')
     plt.ylabel('Effective Area (sq. cm)')
-    plt.suptitle('Arcus Calculated Effective Area,\n4 Channels (Traced Separately),\n' + coating_description + ',\n Full Arcus Focal Plane, No Alignment/Jitter Errors')
+    plt.suptitle('Arcus Calculated Effective Area,\n' + title_description)
     
     plt.ylim(0,600)
     x1,x2 = plt.xlim()
@@ -105,7 +113,7 @@ def plot_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_EffAr
     plt.close()
     os.chdir(home_directory)
 
-def plot_channel_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_EffAreaByOrder_Uncoated.png',coating_description = 'Uncoated (1 nm SiO2, 4 Angstrom Roughness, Si substrate)'):
+def plot_channel_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_EffAreaByOrder_Uncoated.png',title_description = 'Default'):
     ea_channel = ChanEA
     spectral_ea = sum(ea_channel[:,1:],axis = 1)
     
@@ -137,7 +145,7 @@ def plot_channel_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTra
     # Labeling the plot, and setting the ticks consistently. 
     plt.xlabel('Wavelength (Angstroms)')
     plt.ylabel('Effective Area (sq. cm)')
-    plt.suptitle('Arcus Calculated Effective Area,\n4 Channels (Traced Separately),\n' + coating_description + ',\n Full Arcus Focal Plane, No Alignment/Jitter Errors')
+    plt.suptitle('Arcus Calculated Effective Area,\n' + title_description)
 
     plt.ylim(0,150)
     x1,x2 = plt.xlim()
@@ -160,8 +168,7 @@ def plot_channel_ea(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTra
     os.chdir(home_directory)
 
 def plot_row_ea(wavelengths,orders,RowEA,plot_fn = '171202_arcusTrace_EffAreaByOrder_Uncoated_RowN.png',\
-                coating_description = 'Uncoated (1 nm SiO2, 4 Angstrom Roughness, Si substrate)',\
-                row_string = 'Row Number N'):
+                title_description = 'Default',row_string = 'Row Number N'):
     spectral_ea = sum(RowEA[:,1:],axis = 1)
     
     #####################################
@@ -192,7 +199,7 @@ def plot_row_ea(wavelengths,orders,RowEA,plot_fn = '171202_arcusTrace_EffAreaByO
     # Labeling the plot, and setting the ticks consistently. 
     plt.xlabel('Wavelength (Angstroms)')
     plt.ylabel('Effective Area (sq. cm)')
-    plt.suptitle('Arcus Calculated Effective Area,\n4 Channels (Traced Separately),\n' + coating_description + ',\n' + row_string)
+    plt.suptitle('Arcus Calculated Effective Area,\n' + title_description + ',\n' + row_string)
 
     plt.ylim(0,100)
     x1,x2 = plt.xlim()
@@ -248,3 +255,53 @@ def write_to_csv_file(wavelengths,orders,ChanRes,ChanEA,csv_file_name = 'default
     
     csvfile.close()
     return
+
+################################################
+# Functions for Housekeeping
+################################################
+
+def make_results_directories(home_directory):
+    if not os.path.exists(home_directory + '/ResultCSVFiles'):
+        os.makedirs(home_directory + '/ResultCSVFiles')
+        os.makedirs(home_directory + '/ResultCSVFiles/IndividualChannels')
+        os.makedirs(home_directory + '/ResultCSVFiles/RowByRow')
+    
+    if not os.path.exists(home_directory + '/ResultFigures'):
+        os.makedirs(home_directory + '/ResultFigures')
+        os.makedirs(home_directory + '/ResultFigures/IndividualChannels')
+        os.makedirs(home_directory + '/ResultFigures/RowByRow')
+        
+    if not os.path.exists(home_directory + '/ResultPickles'):
+        os.makedirs(home_directory + '/ResultPickles')
+        os.makedirs(home_directory + '/ResultPickles/IndividualChannels')
+        os.makedirs(home_directory + '/ResultPickles/Rays')
+        os.makedirs(home_directory + '/ResultPickles/RowByRow')
+        
+    csv_path = home_directory + '/ResultCSVFiles/'
+    plot_path = home_directory + '/ResultFigures/'
+    pickle_path = home_directory + '/ResultPickles/'
+    
+    return csv_path,plot_path,pickle_path
+
+def do_channel_outputs(wavelengths,orders,ArcusR,ArcusEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description):
+    for n in range(len(ArcusR)):
+        write_to_csv_file(wavelengths,orders,ArcusR[n],ArcusEA[n],csv_file_name = csv_path + 'IndividualChannels/' + fileend + '_OC' + str(n + 1) + '.csv',\
+                            result_file = fileend + '.pk1', description_line = csv_description)
+        plot_channel_ea(wavelengths,orders,ArcusR[n],ArcusEA[n],\
+                            plot_fn = plot_path + 'IndividualChannels/' + fileend + '_OC' + str(n + 1) + '.png',\
+                            title_description = ea_title_description)
+    return
+
+def do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description):
+    print 'Making row-by-row .csv files and plots....'
+    for n in range(len(ArcusRowR)):
+        write_to_csv_file(wavelengths,orders,ArcusRowR[n],ArcusRowEA[n],\
+                            csv_file_name = csv_path + 'RowByRow/' + fileend + '_Row' + str(n + 1) + '.csv',\
+                            result_file = pickle_path + 'RowByRow/' + fileend + '_RowByRow.pk1',\
+                            description_line = csv_description)
+        plot_row_ea(wavelengths,orders,ArcusRowEA[n],\
+                            plot_fn = plot_path + 'RowByRow/' + fileend + '_Row' + str(n + 1) + '.png',\
+                            title_description = ea_title_description,\
+                            row_string = 'Row Number ' + str(n + 1))
+    return
+

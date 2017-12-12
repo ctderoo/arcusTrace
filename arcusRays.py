@@ -77,7 +77,11 @@ class ArcusRays:
         f.close()
 
 def merge_ray_object_dict(ray_object_dict):
-    merged_object = copy.deepcopy(ray_object_dict[ray_object_dict.keys()[0]])
+    try:
+        merged_object = copy.deepcopy(ray_object_dict[ray_object_dict.keys()[0]])
+    # Exception occurs when ray_object_dist is empty.
+    except IndexError:
+        return ray_object_dict
     for ray_attrib in merged_object.__dict__.keys():
         merged_object.__dict__[ray_attrib] = hstack(tuple([ray_object_dict[key].__dict__[ray_attrib] for key in ray_object_dict]))
     return merged_object    
