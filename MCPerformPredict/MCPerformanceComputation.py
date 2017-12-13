@@ -33,15 +33,29 @@ def single_channel_trace(opt_chan,det_array,wavelength,N):
     # Create the source, trace it through the SPO petal and the CAT grating petal.
     test_rays = ArcRays.make_channel_source(N,wave = wavelength)
     spo_petal_rays = ArcSPO.SPOPetalTrace(test_rays,opt_chan.chan_xous)
+    
+    # Checking if the ray dictionary is empty. If it is, return the empty dictionary.
+    
+    if len(spo_petal_rays.x) == 0:
+        return spo_petal_rays
+    
     cat_petal_rays = ArcCAT.CATPetalTrace(spo_petal_rays,opt_chan.chan_facets)
 
+    # Checking if the ray dictionary is empty. If it is, return the empty dictionary.
+    if len(cat_petal_rays.x) == 0:
+        return cat_petal_rays
+    
     # Do transform to petal coordinates.
     instrum_chan_rays = copy.deepcopy(cat_petal_rays)
     opt_chan.rays_from_chan_to_instrum_coords(instrum_chan_rays)
     instrum_chan_rays.chan_num = ones(len(instrum_chan_rays.x))*opt_chan.chan_num
-    
+        
     # Hit the shared Arcus Focal Plane.
     det_rays = ArcDet.DetectorArrayTrace(instrum_chan_rays,det_array.fpa_dets)
+    
+    # Checking if the ray dictionary is empty. If it is, return the empty dictionary.
+    if len(det_rays.x) == 0:
+        return det_rays
     
     # Transform back to petal coordinates for performance evaluation.
     opt_chan.rays_from_chan_to_instrum_coords(det_rays,inverse = True)
@@ -77,13 +91,21 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
     instrum_ray_dict = {}
     for i in range(len(opt_chans)):
         for j in range(len(wavelengths)):
-            print 'Computing ray bundle -- wavelength: ' + "{:1.3f}".format(wavelengths[j]*10**6) + ', OC' + str(i + 1)
+            print 'Computing ray bundle -- energy: ' + "{:5.1f}".format(1240./(wavelengths[j]*10**6)) + ' eV, wavelength: ' + "{:1.3f}".format(wavelengths[j]*10**6) + ' nm, OC' + str(i + 1)
             chan_rays = single_channel_trace(opt_chans[i],fpa,wavelengths[j],N)
-            ArcusR[i,j],ArcusEA[i,j] = compute_perf_by_orders(chan_rays,convert_factor = illum_area/float(N))
             
-            # Converting the rays back to instrument coordinates for storage.
-            opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
-            instrum_ray_dict['OC' + str(i) + '_WaveStep' + str(j)] = chan_rays
+            # Checking if the ray dictionary is empty. If it is, if not chan_rays returns True and we scrap that measurement.
+            if len(chan_rays.x) == 0:
+                ArcusR[i,j],ArcusEA[i,j] = 0,0
+                #instrum_ray_dict['OC' + str(i) + '_WaveStep' + str(j)] = chan_rays
+            else:
+                ArcusR[i,j],ArcusEA[i,j] = compute_perf_by_orders(chan_rays,convert_factor = illum_area/float(N))
+                # Converting the rays back to instrument coordinates for storage.
+                try:
+                    opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
+                except:
+                    pdb.set_trace()
+                instrum_ray_dict['OC' + str(i) + '_WaveStep' + str(j)] = chan_rays
     
             if j % 20 == 0:
                 dict_for_merge = copy.deepcopy(instrum_ray_dict)

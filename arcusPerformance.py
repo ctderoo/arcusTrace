@@ -108,9 +108,8 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     geff_func -- a lookup function as a function of incidence angle, wavelength, and order.
     '''
     geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    # Sorting the list.
     wave,theta,order = unique(geff_data[:,0]),unique(geff_data[:,1]),range(0,13,1)
-    
-    # Hardcoding for now.
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func
