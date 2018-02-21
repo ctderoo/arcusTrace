@@ -19,6 +19,10 @@ class coordinate_system:
         self.xhat = xhat
         self.yhat = yhat
         self.zhat = zhat
+    
+    def unpack(self):
+        return self.x,self.y,self.z,self.xhat,self.yhat,self.zhat
+    
 
 instrument_coord_sys = coordinate_system(0.,0.,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 OC1_coords = coordinate_system(300.,2.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
@@ -345,5 +349,15 @@ class ArcusFPA(object):
     def set_det_effect(self,det_effect_func, det_effect_name = 'N/A'):
         for key in self.fpa_dets.keys():
             self.fpa_dets[key].add_det_effect(det_effect_name,det_effect_func)
+            
+    def update_fpa_coords(self, new_fpa_coords):
+        fpa_x,fpa_y,fpa_z,fpa_xhat,fpa_yhat,fpa_zhat = new_fpa_coords.unpack()
+        for key in self.fpa_dets.keys():
+            x,y,z,xhat,yhat,zhat = self.fpa_dets[key].ccd_coords.unpack()
+            
+            rot_fpa = linalg.inv(ArcUtil.make_rot_matrix(fpa_xhat,fpa_yhat,fpa_zhat))
+            new_xhat,new_yhat,new_zhat = dot(rot_fpa,xhat),dot(rot_fpa,yhat),dot(rot_fpa,zhat)
+            self.fpa_dets[key].ccd_coords = coordinate_system(x + fpa_x,y + fpa_y,z + fpa_z,new_xhat,new_yhat,new_zhat)
+            
     
     

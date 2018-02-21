@@ -76,11 +76,17 @@ class ArcusRays:
         pickle.dump(attribs,f)
         f.close()  
 
-def make_channel_source(num_rays,wave = 1.24e-6,xextent = 450.,yextent = 570.):
+def make_channel_source(num_rays,wave = 1.24e-6,xextent = 500.,yextent = 675.,fs_dist = None):
+    illum_height = 575
     rays = source.rectbeam(xextent/2,yextent/2,num_rays)
-    rays[2] = rays[2] + 575.
-    rays[3] = ones(len(rays[3]))*1e12
+    rays[2] = rays[2] + illum_height
     rays[6] = -ones(len(rays[6]))
+    if fs_dist is not None:
+        tran.pointTo(rays,0.,illum_height,fs_dist + 12000,reverse = 1)
+        zdist = surf.focusX(rays)
+        rays[3] = ones(len(rays[3]))*zdist
+    else:
+        rays[3] = ones(len(rays[3]))*1e12
     wave = zeros(num_rays) + wave
     ray_object = ArcusRays(rays,wave)
     return ray_object

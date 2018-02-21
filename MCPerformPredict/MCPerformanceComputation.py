@@ -29,9 +29,9 @@ import arcusTrace.MCPerformPredict.MCPerformancePlotting as ArcMCPlot
 
 illum_area = 45*57.
 
-def single_channel_trace(opt_chan,det_array,wavelength,N):
+def single_channel_trace(opt_chan,det_array,wavelength,N,fs_dist = None):
     # Create the source, trace it through the SPO petal and the CAT grating petal.
-    test_rays = ArcRays.make_channel_source(N,wave = wavelength)
+    test_rays = ArcRays.make_channel_source(N,wave = wavelength,fs_dist = fs_dist)
     spo_petal_rays = ArcSPO.SPOPetalTrace(test_rays,opt_chan.chan_xous)
     
     # Checking if the ray dictionary is empty. If it is, return the empty dictionary.
