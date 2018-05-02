@@ -23,7 +23,6 @@ class coordinate_system:
     def unpack(self):
         return self.x,self.y,self.z,self.xhat,self.yhat,self.zhat
     
-
 instrument_coord_sys = coordinate_system(0.,0.,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 OC1_coords = coordinate_system(300.,2.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 OC2_coords = coordinate_system(300.,-7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))

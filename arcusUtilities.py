@@ -119,3 +119,7 @@ def check_normals(rays,grat_hit,ind):
     norms = transpose(norms)
     ngrat = cfpar.ngrats[ind]
     return norms,ngrat
+
+def get_xou_ray_object(ray_object,ind):
+    selector = ray_object.xou_hit == ind
+    

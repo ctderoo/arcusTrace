@@ -98,7 +98,7 @@ def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
     #debyewaller_rays = tran.vignette(rays,ind = vig_locs) return debyewaller_rays
     return vig_locs
 
-def make_geff_interp_func(grat_eff_file = grat_eff_fn):
+def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
     '''
     From the grating efficiency file in the CALDB directory, produce an interpolation function for
     grating efficiency lookup as a function of incidence angle, wavelength, and order.
@@ -107,14 +107,17 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     Output:
     geff_func -- a lookup function as a function of incidence angle, wavelength, and order.
     '''
-    geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    if style == 'old':
+        geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    else:
+        geff_data = genfromtxt(grat_eff_file,delimiter = '\t',dtype = float)
     # Sorting the list.
-    wave,theta,order = unique(geff_data[:,0]),unique(geff_data[:,1]),range(0,13,1)
+    wave,theta,order = unique(geff_data[:,0]),unique(geff_data[:,1]),range(-4,16,1)
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func
 
-def pick_order(geff_func,theta,wave,orders = range(0,13,1)):
+def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
     '''
     '''
     N = len(theta)
