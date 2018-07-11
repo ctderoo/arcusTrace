@@ -185,10 +185,10 @@ def read_caldb_csvfile(fn):
 
 class ArcusChannel(object):
     ''' Default class variables '''
-    default_xou_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_SPO_XOU_Specs_Rev1p0_171112.csv'
-    default_xou_ref_pointer = '/Users/Casey/Software/ReflectLib/MLMirror_L1SiC_L2Ir_SubSi_L1Thick_6p0L2Thick_10p0_Rough4p00AngRMS_X-rayRefData.npy'
-    default_facet_pointer = '/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_CATGrating_Facets_Specs_Rev1p0_171112.csv'
-    default_diff_eff_pointer = '/Users/Casey/Software/Bitbucket/caldb-inputdata/gratings/efficiency_extended.csv'
+    default_xou_pointer = 'C:/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_SPO_XOU_Specs_Rev1p0_171112.csv'
+    default_xou_ref_pointer = 'C:/Users/Casey/Software/ReflectLib/MLMirror_L1SiC_L2Ir_SubSi_L1Thick_6p0L2Thick_10p0_Rough4p00AngRMS_X-rayRefData.npy'
+    default_facet_pointer = 'C:/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/Arcus_CATGrating_Facets_Specs_Rev1p0_171112.csv'
+    default_diff_eff_pointer = 'C:/Users/Casey/Software/Bitbucket/caldb-inputdata/gratings/efficiency_extended.csv'
     
     def __init__(self,chan_num, chan_coords = OC1_coords,xou_pointer = default_xou_pointer,facet_pointer = default_facet_pointer,\
                xou_ref_pointer = default_xou_ref_pointer,order_select = None, diff_eff_pointer = default_diff_eff_pointer):

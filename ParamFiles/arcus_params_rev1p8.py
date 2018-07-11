@@ -118,7 +118,8 @@ grat_dims = array([27,26])
 #    ygrats = hstack((ygrats,ytemp))
 
 
-grat_locs = loadtxt('/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt',delimiter = ',')
+grat_locs = loadtxt('C:/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt',delimiter = ',')
+#'/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt',delimiter = ',')
 xgrats,ygrats,zgrats = grat_locs[:,0],grat_locs[:,1],grat_locs[:,2]
 
 N_grats = len(xgrats)
