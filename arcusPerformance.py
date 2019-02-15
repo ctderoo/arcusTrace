@@ -21,7 +21,7 @@ home_directory = os.getcwd()
 ########################################################################
 
 # Overall responses are contained here.
-caldb_directory = '/Users/Casey/Software/Bitbucket/caldb-inputdata'
+caldb_directory = 'C:/Users/Casey/Software/Bitbucket/caldb-inputdata'
 
 # Contains grating-related performance files, e.g. transmission from L1, L2 filters, order efficiency, etc.
 spo_directory = caldb_directory + '/spos'
@@ -146,7 +146,7 @@ def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
 ########################################################################
  
 # Overall responses are contained here.
-reflib_directory = '/Users/Casey/Software/ReflectLib'
+reflib_directory = 'C:/Users/Casey/Software/ReflectLib'
 
 def return_ref_data(pointer):#,mirror_type = 'Thick',layer_thickness = 1.0):
     '''
@@ -171,9 +171,13 @@ def make_reflectivity_func(pointer):
     '''
     '''
     energy,ref,graze = return_ref_data(pointer)
-    earray = energy[0]
-    garray = graze[:,0]
-    ref_func = RGI(points = (garray,earray),values = ref)
+    #pdb.set_trace()
+    earray = energy[:,0]
+    garray = graze[0]
+    ref_func = RGI(points = (earray,garray),values = ref)
+    #earray = energy[0]
+    #garray = graze[:,0]
+    #ref_func = RGI(points = (garray,earray),values = ref)
     return ref_func
 
 def ref_vignette_ind(rays,wave,ref_func,ind = None):
@@ -182,7 +186,7 @@ def ref_vignette_ind(rays,wave,ref_func,ind = None):
         crit = random.random(N)
         energy = (1240./10**6)/wave[ind]
         graze = anal.grazeAngle(rays,ind = ind)*180/pi
-        threshold = ref_func((graze,energy))
+        threshold = ref_func((energy,graze))
         # Finding the numbered indices within the selection of rays given by ind.
         ind_locs = array([i for i, x in enumerate(ind) if x])
         # Defining a new vignetting vector that runs over all the rays (not just those where ind = True)
@@ -194,7 +198,7 @@ def ref_vignette_ind(rays,wave,ref_func,ind = None):
         crit = random.random(N)
         energy = (1240./10**6)/rays[0]
         graze = anal.grazeAngle(rays)*180/pi
-        threshold = ref_func((graze,energy))
+        threshold = ref_func((energy,graze))
         vig_locs = crit > threshold
     return vig_locs
 

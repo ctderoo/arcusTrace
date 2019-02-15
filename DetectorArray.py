@@ -18,13 +18,6 @@ import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # Detector-related functions.
-
-#def check_size_old(rays,phy_size):
-#    x,y = rays[1],rays[2]
-#    xcond = logical_and(rays[1] > -phy_size[0]/2,rays[1] < phy_size[0]/2)
-#    ycond = logical_and(rays[2] > -phy_size[1]/2,rays[2] < phy_size[1]/2)
-#    tcond = logical_and(xcond,ycond)
-#    return tcond
     
 def check_size(rays,phy_size):
     '''
@@ -72,19 +65,30 @@ def ccdTrace(ray_object,ccd):
         vig_list = ArcPerf.apply_detector_effect_vignetting(init_rays,wavelength,ccd.det_effects[i].filter_func)
         v_ind_all = logical_or(v_ind_all,vig_list)
     
+    # Implemented hot fix on 2/14/19 -- mismatch between length of order vector vs. position vector. Stems from a problem 
+    # of assignment on the detector side -- if a handful of rays are vignetted by the CCD vignetting, the ArcUtil.undo_transform
+    # function throws an error, causing us to assign the ray object the position of the original rays (nonzero length) rather than the vignetted (zero length)
+    # rays. However, the order attribute is properly vignetted to zero length. This later results in an error due to the mismatch of the order vector vs. the position vector.
     try: 
         ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
         surf.flat(ccd_rays)
         raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
+    except:
+        pdb.set_trace()
+    # Per comments on line 68, this should result in the same length order vs. position vector.
+    try:
         reref_ccd_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_ccd_rays,ccd.ccd_coords)
     except:
-        reref_ccd_rays = ccd_rays
+        reref_ccd_rays = raw_ccd_rays
     
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.
     ccd_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
     ccd_ray_object.set_prays(reref_ccd_rays)
     
+    if len(ccd_ray_object.x) != len(reref_ccd_rays[1]):
+        pdb.set_trace()
+
     return ccd_ray_object
 
 def DetectorArrayTrace(ray_object,ccd_dict):

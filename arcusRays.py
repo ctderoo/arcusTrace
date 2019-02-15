@@ -73,7 +73,7 @@ class ArcusRays:
         attribs.append(keys)
         attribs.append([new_object.__dict__[key] for key in keys])
         f = open(pickle_file,'wb')
-        pickle.dump(attribs,f)
+        cPickle.dump(attribs,f)
         f.close()  
 
 def make_channel_source(num_rays,wave = 1.24e-6,xextent = 500.,yextent = 675.,fs_dist = None):

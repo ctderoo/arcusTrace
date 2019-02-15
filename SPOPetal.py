@@ -111,7 +111,7 @@ def pearson_vii_draw(size,m,alpha):
         pdb.set_trace()
     return cdf_draw(random.random(size))
 
-def empirical_draw(size,scale,fn = '/Users/Casey/Dropbox/Arcus/GWAT/Raytraces/gwatAnalTrace/180325_ComboFit_Rev10.txt'):
+def empirical_draw(size,scale,fn = 'C:/Users/Casey/Software/python_repository/gwatAnalTrace/180325_ComboFit_Rev10.txt'):
     pdf = loadtxt(fn)
     x = linspace(-20*scale,20*scale,len(pdf))
     cdf = cumsum(pdf)/sum(pdf)
@@ -259,7 +259,7 @@ def XOUTrace(ray_object,xou):
 def SPOPetalTrace(ray_object,xou_dict):
     # Identifying the XOUs hit for all of the input rays.
     id_XOU_for_rays(ray_object,xou_dict)
-
+    #pdb.set_trace()
     petal_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in xou_dict.keys():
@@ -269,7 +269,7 @@ def SPOPetalTrace(ray_object,xou_dict):
             try:
                 petal_ray_dict[key] = XOUTrace(xou_ray_object,xou_dict[key])
             except:
-                pdb.set_trace()
+               #pdb.set_trace()
                 continue       
     petal_ray_object = ArcRays.merge_ray_object_dict(petal_ray_dict)
     return petal_ray_object

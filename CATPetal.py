@@ -156,7 +156,11 @@ def GratFacetTrace(ray_object,facet):
         tran.reflect(facet_rays)
     except:
         facet_rays = init_rays
-    
+
+    # If needed, adding any additional grating scatter in the dispersion direction.
+    if facet.grat_scatter_val is not None:
+        facet_rays[4] = facet_rays[4] + random.normal(scale=facet.grat_scatter_val,size=shape(facet_rays)[1])
+        facet_rays[6] = -sqrt(1. - facet_rays[4]**2 - facet_rays[5]**2)
     # Now we apply the vignetting to all the PyXFocus rays, and undo the original
     # coordinate transformation (i.e. undoing the transform to the facet_coords done
     # at the start of this function)
@@ -175,9 +179,12 @@ def GratFacetTrace(ray_object,facet):
     # setting the ray objects PyXFocus rays to be those traced here.
     facet_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
     facet_ray_object.set_prays(reref_facet_rays)
-    
+
     # Adding two new attributes to our ray object:
     # an order tracker and the angle of incidence on the grating.
+    if len(transmitted_orders) != len(facet_ray_object.x):
+        pdb.set_trace()
+   
     facet_ray_object.order = transmitted_orders
     facet_ray_object.theta_on_facet = theta_on_grat
     
