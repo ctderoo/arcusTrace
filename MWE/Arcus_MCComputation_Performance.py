@@ -50,4 +50,4 @@ times.append(time.time())
 ArcMCComp.ArcusConfigPerfCalc(uncoated_opt_chans,fpa,wavelengths,N,fileend = uncoated_fileend,csv_description = csv_description,ea_title_description = uncoated_ea_title_description)
 times.append(time.time())
 
-[wavelength,orders,ArcusR,ArcusEA] = cPickle.load(open(os.getcwd() + '/ResultPickles/IndividualChannels/' + coated_fileend + '.pk1','rb'))
+[wavelength,orders,ArcusR,ArcusEA] = cPickle.load(open(os.getcwd() + '/ResultPickles/IndividualChannels/' + uncoated_fileend + '.pk1','rb'))
