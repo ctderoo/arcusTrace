@@ -28,7 +28,9 @@ def do_ray_transform_to_coordinate_system(rays,coord_sys):
     R = make_rot_matrix(coord_sys.xhat,coord_sys.yhat,coord_sys.zhat)
     a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
     tran.transform(transform_rays,coord_sys.x,coord_sys.y,coord_sys.z,a1,a2,a3)
-    return [asarray(transform_rays)[i] for i in range(len(rays))]
+    #pdb.set_trace()
+    # return [asarray(transform_rays)[i] for i in range(len(rays))]
+    return asarray(transform_rays)
 
 def undo_ray_transform_to_coordinate_system(rays,coord_sys):
     transform_rays = copy_rays(rays)
