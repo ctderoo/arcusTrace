@@ -13,6 +13,7 @@ import PyXFocus.analyses as anal
 import PyXFocus.transformations as tran
 import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
+from arcusTrace.ParamFiles.pointers import *
 
 home_directory = os.getcwd()
 
@@ -21,7 +22,7 @@ home_directory = os.getcwd()
 ########################################################################
 
 # Overall responses are contained here.
-caldb_directory = 'C:/Users/Casey/Software/Bitbucket/caldb-inputdata'
+# caldb_directory = 'C:/Users/swarm/Software/Bitbucket/caldb-inputdata'
 
 # Contains grating-related performance files, e.g. transmission from L1, L2 filters, order efficiency, etc.
 spo_directory = caldb_directory + '/spos'
@@ -146,7 +147,7 @@ def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
 ########################################################################
  
 # Overall responses are contained here.
-reflib_directory = 'C:/Users/Casey/Software/ReflectLib'
+# reflib_directory = 'C:/Users/swarm/Software/ReflectLib'
 
 def return_ref_data(pointer):#,mirror_type = 'Thick',layer_thickness = 1.0):
     '''
