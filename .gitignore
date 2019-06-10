@@ -5,3 +5,7 @@
 *.so.dSYM/
 # Ignore the DS Store and needed import __init__.pyc
 *.DS_Store
+# Ignore MWE folder
+MWE/*
+# Ignore changes to pointers file
+ParamFiles/pointers.py
