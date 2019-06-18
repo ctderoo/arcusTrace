@@ -229,7 +229,7 @@ def ref_vignette_ind(rays,wave,ref_func,ind = None):
         vig_locs = crit > threshold
     return vig_locs
 
-def ref_weight_ind(rays,wave,ref_func,ind = None):
+def ref_weighting_ind(rays,wave,ref_func,ind = None):
     if ind is not None:
         energy = (1240./10**6)/wave[ind]
         graze = anal.grazeAngle(rays,ind = ind)*180/pi
