@@ -6,6 +6,7 @@ import copy
 
 import pdb
 from scipy.optimize import root
+from arcusTrace.ParamFiles.pointers import *
 
 ####################################################################
 # Petal Optical Design Configuration File
@@ -117,9 +118,8 @@ grat_dims = array([27,26])
 #    xgrats = hstack((xgrats,xtemp))
 #    ygrats = hstack((ygrats,ytemp))
 
-
-grat_locs = loadtxt('C:/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt',delimiter = ',')
-#'/Users/Casey/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt',delimiter = ',')
+# grat_path = 'C:/Users/swarm/Software/python_repository/arcusTrace/ParamFiles/171019_GratPoints_OC13_XYZ.txt'
+grat_locs = loadtxt(grat_path,delimiter = ',')
 xgrats,ygrats,zgrats = grat_locs[:,0],grat_locs[:,1],grat_locs[:,2]
 
 N_grats = len(xgrats)

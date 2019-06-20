@@ -13,6 +13,7 @@ import PyXFocus.analyses as anal
 import PyXFocus.transformations as tran
 import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
+from arcusTrace.ParamFiles.pointers import *
 
 home_directory = os.getcwd()
 
@@ -21,7 +22,7 @@ home_directory = os.getcwd()
 ########################################################################
 
 # Overall responses are contained here.
-caldb_directory = 'C:/Users/Casey/Software/Bitbucket/caldb-inputdata'
+# caldb_directory = 'C:/Users/swarm/Software/Bitbucket/caldb-inputdata'
 
 # Contains grating-related performance files, e.g. transmission from L1, L2 filters, order efficiency, etc.
 spo_directory = caldb_directory + '/spos'
@@ -62,6 +63,22 @@ def read_caldb_csvfile(fn):
 # Applications of straightforward geometric loss.
 ########################################################################
 
+def apply_support_weighting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,\
+                             L2_support_file = grat_L2vig_fn,pore_transmission_file = pore_transmission_fn):
+    # We are extracting the transmission efficiency of the SPO structure
+    if support == 'L1':
+        structure_header,structure_data = read_caldb_csvfile(L1_support_file)
+    elif support == 'L2':
+        structure_header,structure_data = read_caldb_csvfile(L2_support_file)
+    elif support == 'PoreStructure':
+        structure_header,structure_data = read_caldb_csvfile(pore_transmission_file)
+    else:
+        pdb.set_trace()
+        
+    transmission = structure_data[0]
+    #structure_rays = tran.vignette(rays,ind = vig_locs)
+    return transmission #structure_rays,vig_locs
+
 def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,\
                              L2_support_file = grat_L2vig_fn,pore_transmission_file = pore_transmission_fn):
     N = len(rays[0])
@@ -95,8 +112,17 @@ def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
     N = len(rays[0])
     crit = random.random(N)
     vig_locs = crit > threshold
+    #pdb.set_trace()
     #debyewaller_rays = tran.vignette(rays,ind = vig_locs) return debyewaller_rays
     return vig_locs
+
+def apply_debye_waller_weighting(rays,debye_waller_file = grat_debye_waller_fn):
+    def debye_waller(d,sigma):
+        return exp(-2*pi*sigma/d)
+    header,data = read_caldb_csvfile(debye_waller_file)
+    d,sigma = data[0,0],data[0,1]
+    threshold = debye_waller(d,sigma)*ones(len(rays[0]))
+    return threshold
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
     '''
@@ -139,6 +165,7 @@ def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
             order_vec[i] = orders[sum(~(crit[i] < order_cdf[i]))]
         except IndexError:
             pass
+    #pdb.set_trace()
     return order_vec,crit,order_cdf
     
 ########################################################################
@@ -146,7 +173,7 @@ def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
 ########################################################################
  
 # Overall responses are contained here.
-reflib_directory = 'C:/Users/Casey/Software/ReflectLib'
+# reflib_directory = 'C:/Users/swarm/Software/ReflectLib'
 
 def return_ref_data(pointer):#,mirror_type = 'Thick',layer_thickness = 1.0):
     '''
@@ -202,6 +229,26 @@ def ref_vignette_ind(rays,wave,ref_func,ind = None):
         vig_locs = crit > threshold
     return vig_locs
 
+def ref_weighting_ind(rays,wave,ref_func,ind = None):
+    if ind is not None:
+        energy = (1240./10**6)/wave[ind]
+        graze = anal.grazeAngle(rays,ind = ind)*180/pi
+        threshold = ref_func((energy,graze))
+        # Finding the numbered indices within the selection of rays given by ind.
+        ind_locs = array([i for i, x in enumerate(ind) if x])
+        # Defining a new vignetting vector that runs over all the rays (not just those where ind = True)
+        vig_locs = ones(len(rays[0]),dtype = float)
+        # Now selecting those rays within ind AND where the random number doesn't clear the reflectivity.
+        vig_locs[ind_locs] = threshold
+    else:
+        # N = len(rays[0])
+        # crit = random.random(N)
+        energy = (1240./10**6)/rays[0]
+        graze = anal.grazeAngle(rays)*180/pi
+        threshold = ref_func((energy,graze))
+        vig_locs = threshold
+    return vig_locs
+
 ########################################################################
 # Detector Absorption and QE
 ########################################################################
@@ -218,5 +265,13 @@ def apply_detector_effect_vignetting(rays,wave,interp_func):
     wave_nm = wave*10**6
     threshold = interp_func(wave_nm)
     vig_locs = crit > threshold
+    #pdb.set_trace()
     #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
     return vig_locs
+
+def apply_detector_effect_weighting(rays,wave,interp_func):
+    wave_nm = wave*10**6
+    threshold = interp_func(wave_nm)
+    #pdb.set_trace()
+    #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
+    return threshold

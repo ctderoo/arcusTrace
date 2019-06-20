@@ -147,10 +147,10 @@ def id_XOU_for_rays(ray_object,xou_dict):
 def XOUTrace(ray_object,xou):
     """
     Trace a set of rays through an XOU. Incorporates ray plate selection and
-    plate-by-plate vignetting, but does not yet incorporate pore width effects.
+    plate-by-plate weighting, but does not yet incorporate pore width effects.
     #Inputs:
+    # ray_object -- a ray class from arcusRays
     # xou -- an xou object from ArcusComponents.
-    # xou_rays -- a PyXFocus ray list.
     #Outputs:
     # xou_rays = a ray object centered on the SPO, with:
     #    x - the radial coordinates, zeroed at the center of the SPO radius,
@@ -162,17 +162,14 @@ def XOUTrace(ray_object,xou):
     # Generating an internal ray object to play nicely with PyXFocus routines.
     input_rays = ray_object.yield_prays()
     wavelength = ray_object.wave
+    weight = ray_object.weight
+
     int_rays = ArcUtil.do_ray_transform_to_coordinate_system(input_rays,xou.xou_coords)
-    
     surf.flat(int_rays)
-    
     ray_radius = sqrt(int_rays[1]**2+int_rays[2]**2)
-    v_ind_all = zeros(len(int_rays[1]),dtype = bool)
-    # Bookkeeping variables in case checking how many rays get vignetted (and through what process) is necessary.
-    geo_v,ref_v = 0,0
     
     if xou.pore_vignette == True:
-        v_ind_all = ArcPerf.apply_support_vignetting(int_rays,support = 'PoreStructure')
+        weight *= ArcPerf.apply_support_weighting(int_rays,support = 'PoreStructure')
     
     for r in xou.plate_radii:
         # Collect relevant rays: tr_ind are the rays that should be traced,
@@ -180,29 +177,25 @@ def XOUTrace(ray_object,xou):
         # Note that the sidewall vignetting is completely ignored.
         tr_ind = logical_and(ray_radius > r,ray_radius < r + xou.pore_space)
         v_ind = logical_and(ray_radius > r + xou.pore_space, ray_radius < r + xou.plate_height)
-        geo_v = geo_v + sum(v_ind)
-        v_ind_all = logical_or(v_ind,v_ind_all)
-        
+        weight[v_ind] = 0
         # In case our sampling is so sparse that there are no rays fulfilling this condition.
         if sum(tr_ind) == 0: 
             continue
             
-        surf.spoPrimary(int_rays,r,xou.focal_length,ind = tr_ind)
-        tran.reflect(int_rays,ind = tr_ind)
+        surf.spoPrimary(int_rays,r,xou.focal_length,ind = logical_and(tr_ind, weight > 0))
+        tran.reflect(int_rays,ind = logical_and(tr_ind, weight > 0))
         if xou.ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
-            v_ind_ref = ArcPerf.ref_vignette_ind(int_rays,wavelength,xou.ref_func,ind = tr_ind)
-            ref_v = ref_v + sum(v_ind_ref)
-            v_ind_all = logical_or(v_ind_ref,v_ind_all)
+            weight *= ArcPerf.ref_weighting_ind(int_rays,wavelength,xou.ref_func,ind = logical_and(tr_ind, weight > 0))
         
-        surf.spoSecondary(int_rays,r,xou.focal_length,ind = tr_ind)
-        tran.reflect(int_rays,ind = tr_ind)
+
+        surf.spoSecondary(int_rays,r,xou.focal_length,ind = logical_and(tr_ind, weight > 0))
+        tran.reflect(int_rays,ind = logical_and(tr_ind, weight > 0))
         if xou.ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
-            v_ind_ref = ArcPerf.ref_vignette_ind(int_rays,wavelength,xou.ref_func,ind = tr_ind)
-            ref_v = ref_v + sum(v_ind_ref)
-            v_ind_all = logical_or(v_ind_ref,v_ind_all)
-    
+            weight *= ArcPerf.ref_weighting_ind(int_rays,wavelength,xou.ref_func,ind = logical_and(tr_ind, weight > 0))
+        
+
     # Add normalized scatter to the direction cosines if desired.
     if xou.scatter[0] == 'Gaussian':
         int_rays[4] = int_rays[4] + random.normal(scale=xou.dispdir_scatter_val,size=shape(int_rays)[1])
@@ -240,26 +233,22 @@ def XOUTrace(ray_object,xou):
         int_rays[5] = int_rays[5] + empirical_draw(shape(int_rays)[1],xou.crossdispdir_scatter_val)
 
     int_rays[6] = -sqrt(1.- int_rays[5]**2 - int_rays[4]**2)
-    # Preventing the above from being poorly defined (in case int_rays[5]**2 + int_rays[6]**2 greater than 1)
-    v_ind_all = logical_or(v_ind_all,isnan(int_rays[6]))
     
     # Now we apply the vignetting to all the PyXFocus rays, and undo the original
     # coordinate transformation (i.e. undoing the transform to the xou_coords done
     # at the start of this function)
-    raw_xou_rays = tran.vignette(int_rays,ind = ~v_ind_all)
-    reref_xou_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_xou_rays,xou.xou_coords)
-    
+    reref_xou_rays = ArcUtil.undo_ray_transform_to_coordinate_system(int_rays,xou.xou_coords)
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.
-    xou_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
+    
+    xou_ray_object = ray_object.yield_object_indices(ind = ones(len(reref_xou_rays[0]),dtype = bool))
     xou_ray_object.set_prays(reref_xou_rays)
-
     return xou_ray_object
 
 def SPOPetalTrace(ray_object,xou_dict):
     # Identifying the XOUs hit for all of the input rays.
     id_XOU_for_rays(ray_object,xou_dict)
-    #pdb.set_trace()
+    # print sum(ray_object.xou_hit >= 0)
     petal_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in xou_dict.keys():
@@ -270,6 +259,6 @@ def SPOPetalTrace(ray_object,xou_dict):
                 petal_ray_dict[key] = XOUTrace(xou_ray_object,xou_dict[key])
             except:
                 #pdb.set_trace()
-                continue       
+                continue
     petal_ray_object = ArcRays.merge_ray_object_dict(petal_ray_dict)
     return petal_ray_object
