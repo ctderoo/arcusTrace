@@ -29,6 +29,7 @@ class ArcusRays:
         self.nz = PyXFocusRays[9]
         self.wave = wave
         self.index = arange(len(PyXFocusRays[0]))
+        self.weight = ones(len(PyXFocusRays[0]))
             
     def set_prays(self,PyXFocusRays, ind = None):
         if ind is not None:

@@ -46,6 +46,8 @@ uncoated_ea_title_description = '4 Channels (Traced Separately),\nUncoated Plate
 ################################################
 times = []
 
+pdb.set_trace()
+
 times.append(time.time())
 ArcMCComp.ArcusConfigPerfCalc(uncoated_opt_chans,fpa,wavelengths,N,fileend = uncoated_fileend,csv_description = csv_description,ea_title_description = uncoated_ea_title_description)
 times.append(time.time())
