@@ -237,7 +237,7 @@ def ref_weighting_ind(rays,wave,ref_func,ind = None):
         # Finding the numbered indices within the selection of rays given by ind.
         ind_locs = array([i for i, x in enumerate(ind) if x])
         # Defining a new vignetting vector that runs over all the rays (not just those where ind = True)
-        vig_locs = zeros(len(rays[0]),dtype = float)
+        vig_locs = ones(len(rays[0]),dtype = float)
         # Now selecting those rays within ind AND where the random number doesn't clear the reflectivity.
         vig_locs[ind_locs] = threshold
     else:
