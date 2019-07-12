@@ -41,7 +41,8 @@ def undo_ray_transform_to_coordinate_system(rays,coord_sys):
     tran.transform(transform_rays,0,0,0,-a1,0,0)
     tran.transform(transform_rays,-coord_sys.x,-coord_sys.y,-coord_sys.z,0,0,0)
     #pdb.set_trace()
-    return [asarray(transform_rays)[i] for i in range(len(rays))]
+    # return [asarray(transform_rays)[i] for i in range(len(rays))]
+    return asarray(transform_rays)
 
 def chan_to_instrum_transform(transform_rays,coord_sys,refx = False,refy = False,inverse = False):
     rays = copy_rays(transform_rays)
