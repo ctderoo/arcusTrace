@@ -59,7 +59,7 @@ def ccdTrace(ray_object,ccd):
     wavelength = ray_object.wave
     weight = ray_object.weight
 
-    v_ind_all = zeros(len(init_rays[0]),dtype = bool)
+    # v_ind_all = zeros(len(init_rays[0]),dtype = bool)
     
     # Performing all the vignetting due to detector effects.
     for i in range(len(ccd.det_effects)):
@@ -70,6 +70,7 @@ def ccdTrace(ray_object,ccd):
     # of assignment on the detector side -- if a handful of rays are vignetted by the CCD vignetting, the ArcUtil.undo_transform
     # function throws an error, causing us to assign the ray object the position of the original rays (nonzero length) rather than the vignetted (zero length)
     # rays. However, the order attribute is properly vignetted to zero length. This later results in an error due to the mismatch of the order vector vs. the position vector.
+    
     try: 
         ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
         surf.flat(ccd_rays)
@@ -99,7 +100,8 @@ def DetectorArrayTrace(ray_object,ccd_dict):
     det_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in ccd_dict.keys():
-        ray_ind_this_ccd = ray_object.ccd_hit == ccd_dict[key].ccd_num
+        ray_ind_this_ccd = logical_and(ray_object.ccd_hit == ccd_dict[key].ccd_num, \
+            ray_object.weight > 0)
         # Handling the case where there are no rays on this CCD.
         if sum(ray_ind_this_ccd) == 0:
             continue
@@ -109,6 +111,11 @@ def DetectorArrayTrace(ray_object,ccd_dict):
                 det_ray_dict[key] = ccdTrace(ccd_ray_object,ccd_dict[key])
             except:
                 pdb.set_trace()
+
+    missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.ccd_hit), \
+        ray_object.weight == 0))
+    missed_rays.weight *= 0
+    det_ray_dict['Detector Miss'] = missed_rays
             
     ccd_ray_object = ArcRays.merge_ray_object_dict(det_ray_dict)
     return ccd_ray_object

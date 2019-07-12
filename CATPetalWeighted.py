@@ -200,9 +200,17 @@ def CATPetalTrace(ray_object,facet_dict):
     facet_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in facet_dict.keys():
-        ray_ind_this_facet = ray_object.facet_hit == facet_dict[key].facet_num
+        ray_ind_this_facet = logical_and(ray_object.facet_hit == facet_dict[key].facet_num, \
+            ray_object.weight > 0)
         facet_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_facet)
         facet_ray_dict[key] = GratFacetTrace(facet_ray_object,facet_dict[key])
+    
+    missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.facet_hit), \
+        ray_object.weight == 0))
+    missed_rays.weight *= 0
+    missed_rays.theta_on_facet = full(len(missed_rays.x),nan)
+    missed_rays.order = zeros(len(missed_rays.x))
+    facet_ray_dict['CAT Miss'] = missed_rays
             
     facet_ray_object = ArcRays.merge_ray_object_dict(facet_ray_dict)
     return facet_ray_object

@@ -252,7 +252,8 @@ def SPOPetalTrace(ray_object,xou_dict):
     petal_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in xou_dict.keys():
-        ray_ind_this_xou = ray_object.xou_hit == xou_dict[key].xou_num
+        ray_ind_this_xou = logical_and(ray_object.xou_hit == xou_dict[key].xou_num, \
+            ray_object.weight > 0)
         xou_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_xou)
         if size(xou_ray_object.x) != 0:
             try:
@@ -260,5 +261,12 @@ def SPOPetalTrace(ray_object,xou_dict):
             except:
                 #pdb.set_trace()
                 continue
+
+    missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.xou_hit), \
+        ray_object.weight == 0))
+    missed_rays.weight *= 0
+    petal_ray_dict['XOU Miss'] = missed_rays
+
     petal_ray_object = ArcRays.merge_ray_object_dict(petal_ray_dict)
+ 
     return petal_ray_object
