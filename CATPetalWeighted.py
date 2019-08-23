@@ -27,7 +27,9 @@ def id_facet_for_rays(ray_object,facet_dict):
     for key in facet_dict.keys():
         grat_rays = ArcUtil.do_ray_transform_to_coordinate_system(rays,facet_dict[key].facet_coords)
         surf.flat(grat_rays)
-        bool_list = (grat_rays[1] < facet_dict[key].xsize/2)*(grat_rays[1] > -facet_dict[key].xsize/2)*(grat_rays[2] < facet_dict[key].ysize/2)*(grat_rays[2] > -facet_dict[key].ysize/2)
+        bool_list = (grat_rays[1] < facet_dict[key].xsize/2)*(grat_rays[1] > -facet_dict[key].xsize/2)*\
+            (grat_rays[2] < facet_dict[key].ysize/2)*(grat_rays[2] > -facet_dict[key].ysize/2)*\
+            (ray_object.weight > 0)
         facet_hit[bool_list] = facet_dict[key].facet_num
     ray_object.facet_hit = facet_hit
 
@@ -200,8 +202,7 @@ def CATPetalTrace(ray_object,facet_dict):
     facet_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in facet_dict.keys():
-        ray_ind_this_facet = logical_and(ray_object.facet_hit == facet_dict[key].facet_num, \
-            ray_object.weight > 0)
+        ray_ind_this_facet = ray_object.facet_hit == facet_dict[key].facet_num
         facet_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_facet)
         facet_ray_dict[key] = GratFacetTrace(facet_ray_object,facet_dict[key])
     
