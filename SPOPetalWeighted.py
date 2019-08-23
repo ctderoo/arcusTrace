@@ -140,7 +140,9 @@ def id_XOU_for_rays(ray_object,xou_dict):
         clocked_rays = ArcUtil.do_ray_transform_to_coordinate_system(rays,xou_dict[key].xou_coords)
         surf.flat(clocked_rays)
         radii = sqrt(clocked_rays[1]**2 + clocked_rays[2]**2)
-        bool_list = logical_and(logical_and(radii > xou_dict[key].inner_radius,radii < xou_dict[key].outer_radius),abs(clocked_rays[1]) <= xou_dict[key].azwidth/2)
+        bool_list = logical_and(logical_and(logical_and(ray_object.weight > 0, \
+            radii > xou_dict[key].inner_radius),radii < xou_dict[key].outer_radius), \
+            abs(clocked_rays[1]) <= xou_dict[key].azwidth/2)
         xou_hit[bool_list] = xou_dict[key].xou_num
     ray_object.xou_hit = xou_hit
 
@@ -252,8 +254,7 @@ def SPOPetalTrace(ray_object,xou_dict):
     petal_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in xou_dict.keys():
-        ray_ind_this_xou = logical_and(ray_object.xou_hit == xou_dict[key].xou_num, \
-            ray_object.weight > 0)
+        ray_ind_this_xou = ray_object.xou_hit == xou_dict[key].xou_num
         xou_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_xou)
         if size(xou_ray_object.x) != 0:
             try:

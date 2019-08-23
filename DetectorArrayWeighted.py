@@ -39,7 +39,7 @@ def id_ccd_for_rays(ray_object,ccd_dict):
         copy_rays = ArcUtil.copy_rays(rays)
         ccd_plane_rays = ArcUtil.do_ray_transform_to_coordinate_system(copy_rays,ccd_dict[key].ccd_coords)
         surf.flat(ccd_plane_rays)
-        bool_list = check_size(ccd_plane_rays,(ccd_dict[key].xwidth,ccd_dict[key].ywidth))
+        bool_list = logical_and(ray_object.weight > 0, check_size(ccd_plane_rays, (ccd_dict[key].xwidth,ccd_dict[key].ywidth)))
         ccd_hit[bool_list] = ccd_dict[key].ccd_num
     ray_object.ccd_hit = ccd_hit
 
@@ -100,8 +100,7 @@ def DetectorArrayTrace(ray_object,ccd_dict):
     det_ray_dict = dict()
     # Looping through the entire dictionary of XOUs. 
     for key in ccd_dict.keys():
-        ray_ind_this_ccd = logical_and(ray_object.ccd_hit == ccd_dict[key].ccd_num, \
-            ray_object.weight > 0)
+        ray_ind_this_ccd = ray_object.ccd_hit == ccd_dict[key].ccd_num
         # Handling the case where there are no rays on this CCD.
         if sum(ray_ind_this_ccd) == 0:
             continue
