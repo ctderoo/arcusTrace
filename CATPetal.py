@@ -113,18 +113,17 @@ def GratFacetTrace(ray_object,facet):
     wavelengths = ray_object.wave
     weight = ray_object.weight
     
-    v_ind_all = zeros(len(init_rays[1]),dtype = bool)
+    #v_ind_all = zeros(len(init_rays[1]),dtype = bool)
     
     # Performing the grating structure vignetting.
     if facet.L1supp == True:
         weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L1')
-        # v_ind_all = logical_or(v_ind_all,L1_vig_ind)
     if facet.L2supp == True:
         weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L2')
-        # v_ind_all = logical_or(v_ind_all,L2_vig_ind)
+
+    # Gotta fix this.
     if facet.debye_waller == True:
         weight *= ArcPerf.apply_debye_waller_weighting(init_rays)
-        # v_ind_all = logical_or(v_ind_all,debye_waller_vig_ind)
 
     # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
     thetas = anal.indAngle(init_rays,normal = -facet.facet_coords.zhat)*180/pi

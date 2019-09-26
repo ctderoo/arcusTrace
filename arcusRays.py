@@ -16,7 +16,7 @@ import PyXFocus.conicsolve as conic
 # Arcus Ray Class:
 
 class ArcusRays:
-    def __init__(self, PyXFocusRays, wave):
+    def __init__(self, PyXFocusRays, wave, order):
         self.opd = PyXFocusRays[0]
         self.x = PyXFocusRays[1]
         self.y = PyXFocusRays[2]
@@ -28,6 +28,7 @@ class ArcusRays:
         self.ny = PyXFocusRays[8]
         self.nz = PyXFocusRays[9]
         self.wave = wave
+        self.order = order
         self.index = arange(len(PyXFocusRays[0]))
         self.weight = ones(len(PyXFocusRays[0]))
             
@@ -77,7 +78,7 @@ class ArcusRays:
         cPickle.dump(attribs,f)
         f.close()  
 
-def make_channel_source(num_rays,wave = 1.24e-6,xextent = 500.,yextent = 675.,fs_dist = None):
+def make_channel_source(num_rays,wave,order,xextent = 500.,yextent = 675.,fs_dist = None):
     illum_height = 575
     rays = source.rectbeam(xextent/2,yextent/2,num_rays)
     rays[2] = rays[2] + illum_height
@@ -89,7 +90,8 @@ def make_channel_source(num_rays,wave = 1.24e-6,xextent = 500.,yextent = 675.,fs
     else:
         rays[3] = ones(len(rays[3]))*1e12
     wave = zeros(num_rays) + wave
-    ray_object = ArcusRays(rays,wave)
+    order = ones(num_rays)*order
+    ray_object = ArcusRays(rays,wave,order)
     return ray_object
 
 def load_ray_object_from_pickle(pickle_file):

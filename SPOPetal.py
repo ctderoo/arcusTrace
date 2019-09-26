@@ -96,13 +96,13 @@ def XOUTrace(ray_object,xou):
     if xou.scatter[0] == 'Gaussian':
         int_rays[4] = int_rays[4] + random.normal(scale=xou.dispdir_scatter_val,size=shape(int_rays)[1])
     else:
-        print 'You have selected a scatter profile that is not enabled. You will need to employ the (depreciated) ScatterDraw module." 
+        print "You have selected a scatter profile that is not enabled. You will need to employ the (depreciated) ScatterDraw module." 
         pdb.set_trace()
 
     if xou.scatter[1] == 'Gaussian':
         int_rays[5] = int_rays[5] + random.normal(scale=xou.crossdispdir_scatter_val,size=shape(int_rays)[1])
     else:
-        print 'You have selected a scatter profile that is not enabled. You will need to employ the (depreciated) ScatterDraw module." 
+        print "You have selected a scatter profile that is not enabled. You will need to employ the (depreciated) ScatterDraw module." 
         pdb.set_trace()
 
     int_rays[6] = -sqrt(1.- int_rays[5]**2 - int_rays[4]**2)
@@ -127,12 +127,11 @@ def SPOPetalTrace(ray_object,xou_dict):
     for key in xou_dict.keys():
         ray_ind_this_xou = ray_object.xou_hit == xou_dict[key].xou_num
         xou_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_xou)
-        pdb.set_trace()
         if size(xou_ray_object.x) != 0:
             try:
                 petal_ray_dict[key] = XOUTrace(xou_ray_object,xou_dict[key])
             except:
-                #pdb.set_trace()
+                pdb.set_trace()
                 continue
 
     missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.xou_hit), \

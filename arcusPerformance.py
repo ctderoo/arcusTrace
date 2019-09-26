@@ -76,8 +76,7 @@ def apply_support_weighting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,
         pdb.set_trace()
         
     transmission = structure_data[0]
-    #structure_rays = tran.vignette(rays,ind = vig_locs)
-    return transmission #structure_rays,vig_locs
+    return transmission
 
 def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,\
                              L2_support_file = grat_L2vig_fn,pore_transmission_file = pore_transmission_fn):
@@ -94,8 +93,7 @@ def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn
         
     transmission = structure_data[0]
     vig_locs = crit > transmission
-    #structure_rays = tran.vignette(rays,ind = vig_locs)
-    return vig_locs #structure_rays,vig_locs
+    return vig_locs
 
 ########################################################################
 # Grating efficiency, order selection, and structure vignetting.
@@ -112,8 +110,7 @@ def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
     N = len(rays[0])
     crit = random.random(N)
     vig_locs = crit > threshold
-    #pdb.set_trace()
-    #debyewaller_rays = tran.vignette(rays,ind = vig_locs) return debyewaller_rays
+
     return vig_locs
 
 def apply_debye_waller_weighting(rays,debye_waller_file = grat_debye_waller_fn):
@@ -121,7 +118,6 @@ def apply_debye_waller_weighting(rays,debye_waller_file = grat_debye_waller_fn):
         return exp(-2*pi*sigma/d)
     header,data = read_caldb_csvfile(debye_waller_file)
     d,sigma = data[0,0],data[0,1]
-    # threshold = debye_waller(d,sigma)*ones(len(rays[0]))
     return debye_waller(d,sigma)
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
@@ -175,7 +171,7 @@ def pick_order(geff_func,theta,wave,orders = range(-4,16,1)):
 # Overall responses are contained here.
 # reflib_directory = 'C:/Users/swarm/Software/ReflectLib'
 
-def return_ref_data(pointer):#,mirror_type = 'Thick',layer_thickness = 1.0):
+def return_ref_data(pointer):
     '''
     Inputs:
     material -- string specifying formula as given to CXRO
@@ -198,13 +194,9 @@ def make_reflectivity_func(pointer):
     '''
     '''
     energy,ref,graze = return_ref_data(pointer)
-    #pdb.set_trace()
     earray = energy[:,0]
     garray = graze[0]
     ref_func = RGI(points = (earray,garray),values = ref)
-    #earray = energy[0]
-    #garray = graze[:,0]
-    #ref_func = RGI(points = (garray,earray),values = ref)
     return ref_func
 
 def ref_vignette_ind(rays,wave,ref_func,ind = None):
@@ -241,8 +233,6 @@ def ref_weighting_ind(rays,wave,ref_func,ind = None):
         # Now selecting those rays within ind AND where the random number doesn't clear the reflectivity.
         vig_locs[ind_locs] = threshold
     else:
-        # N = len(rays[0])
-        # crit = random.random(N)
         energy = (1240./10**6)/rays[0]
         graze = anal.grazeAngle(rays)*180/pi
         threshold = ref_func((energy,graze))
@@ -265,13 +255,9 @@ def apply_detector_effect_vignetting(rays,wave,interp_func):
     wave_nm = wave*10**6
     threshold = interp_func(wave_nm)
     vig_locs = crit > threshold
-    #pdb.set_trace()
-    #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
     return vig_locs
 
 def apply_detector_effect_weighting(rays,wave,interp_func):
     wave_nm = wave*10**6
     threshold = interp_func(wave_nm)
-    #pdb.set_trace()
-    #effect_applied_rays = tran.vignette(rays,ind = vig_locs) # effect_applied_rays,
     return threshold

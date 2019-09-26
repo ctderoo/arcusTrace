@@ -64,7 +64,6 @@ def ccdTrace(ray_object,ccd):
     # Performing all the vignetting due to detector effects.
     for i in range(len(ccd.det_effects)):
         weight *= ArcPerf.apply_detector_effect_weighting(init_rays,wavelength,ccd.det_effects[i].filter_func)
-        # v_ind_all = logical_or(v_ind_all,vig_list)
     
     # Implemented hot fix on 2/14/19 -- mismatch between length of order vector vs. position vector. Stems from a problem 
     # of assignment on the detector side -- if a handful of rays are vignetted by the CCD vignetting, the ArcUtil.undo_transform
@@ -74,7 +73,6 @@ def ccdTrace(ray_object,ccd):
     try: 
         ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
         surf.flat(ccd_rays)
-        # raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
     except:
         pdb.set_trace()
     # Per comments on line 68, this should result in the same length order vs. position vector.
