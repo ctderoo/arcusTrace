@@ -110,10 +110,9 @@ def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4)
 def GratFacetTrace(ray_object,facet):
     # Getting the PyXFocus rays from the object.
     init_rays = ray_object.yield_prays()
+    orders = ray_object.order
     wavelengths = ray_object.wave
     weight = ray_object.weight
-    
-    #v_ind_all = zeros(len(init_rays[1]),dtype = bool)
     
     # Performing the grating structure vignetting.
     if facet.L1supp == True:
@@ -127,26 +126,28 @@ def GratFacetTrace(ray_object,facet):
 
     # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
     thetas = anal.indAngle(init_rays,normal = -facet.facet_coords.zhat)*180/pi
+    if facet.diff_eff == True:
+        weight *= facet.geff_func((wavelengths,thetas,orders))
     
-    # Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
-    # function or given by the user by itself.
-    # pdb.set_trace()
-    if isinstance(facet.order_select,int):
-        order = ones(len(init_rays[0]))*facet.order_select
-    elif facet.order_select is None:
-        try:
-            # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
-            # an order of -1000 if the ray would be absorbed (i.e. doesn't transmit or diffracts outside 0th to 12th order.
-            order,crit,order_cdf = ArcPerf.pick_order(facet.geff_func,thetas,wavelengths*10**6)
-            absorbed_ind = order == -1000
-            v_ind_all = logical_or(v_ind_all,absorbed_ind)
-            #sgrat_rays = tran.vignette(sgrat_rays,ind = absorbed_ind)
-            #order = order[nonabsorbed_ind]
-        except:
-            print 'Likely issue: facet has auto order selection on, but no defined reflectivity function. Assess.'
-            pdb.set_trace()
-    else:
-        raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
+    ## Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
+    ## function or given by the user by itself.
+    ## pdb.set_trace()
+    #if isinstance(facet.order_select,int):
+    #    order = ones(len(init_rays[0]))*facet.order_select
+    #elif facet.order_select is None:
+    #    try:
+    #        # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
+    #        # an order of -1000 if the ray would be absorbed (i.e. doesn't transmit or diffracts outside 0th to 12th order.
+    #        order,crit,order_cdf = ArcPerf.pick_order(facet.geff_func,thetas,wavelengths*10**6)
+    #        absorbed_ind = order == -1000
+    #        v_ind_all = logical_or(v_ind_all,absorbed_ind)
+    #        #sgrat_rays = tran.vignette(sgrat_rays,ind = absorbed_ind)
+    #        #order = order[nonabsorbed_ind]
+    #    except:
+    #        print 'Likely issue: facet has auto order selection on, but no defined reflectivity function. Assess.'
+    #        pdb.set_trace()
+    #else:
+    #    raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
     
     # If there are rays hitting the grating, do the transform and diffraction. Otherwise, pass the
     # the empty ray object.
@@ -155,7 +156,7 @@ def GratFacetTrace(ray_object,facet):
         facet_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,facet.facet_coords)
         surf.flat(facet_rays)
         # Actually performing the diffraction on the grating.    
-        tran.grat(facet_rays,facet.period,order,wavelengths)
+        tran.grat(facet_rays,facet.period,orders,wavelengths)
         tran.reflect(facet_rays)
     except:
         facet_rays = init_rays
@@ -164,12 +165,12 @@ def GratFacetTrace(ray_object,facet):
     if facet.grat_scatter_val is not None:
         facet_rays[4] = facet_rays[4] + random.normal(scale=facet.grat_scatter_val,size=shape(facet_rays)[1])
         facet_rays[6] = -sqrt(1. - facet_rays[4]**2 - facet_rays[5]**2)
-    # Now we apply the vignetting to all the PyXFocus rays, and undo the original
-    # coordinate transformation (i.e. undoing the transform to the facet_coords done
-    # at the start of this function)
-    # raw_facet_rays = tran.vignette(facet_rays,ind = ~v_ind_all)
-    transmitted_orders = zeros(len(order))
-    transmitted_orders[weight > 0] = order[weight > 0]
+
+    # Now we clean-up the ray object -- we specified the order and calculated theta, but 
+    # now carry those characteristics forward only for rays with weight > 0 i.e. rays that 
+    # weren't vignetted in this process.
+    transmitted_orders = zeros(len(orders))
+    transmitted_orders[weight > 0] = orders[weight > 0]
     theta_on_grat = full(len(thetas),nan)
     theta_on_grat[weight > 0] = thetas[weight > 0]
     

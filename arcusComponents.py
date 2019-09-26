@@ -99,7 +99,7 @@ class facet(object):
         self.facet_coords = coordinate_system(xloc,yloc,zloc,gdisp,gbar,ngrat)
 
         # Grating facet -- raytracing specific parameters
-        self.order_select = None
+        self.diff_eff = True
         self.L1supp = True
         self.L2supp = True
         self.debye_waller = True

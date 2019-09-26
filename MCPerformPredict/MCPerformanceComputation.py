@@ -70,11 +70,21 @@ def single_channel_trace(opt_chan,det_array,wavelength,order,N,fs_dist = None):
     return det_rays
 
 def compute_order_res(chan_rays,order,threshold = 0):
+    # If this is zeroth order, there's no spectral resolution.
     if order == 0:
         return 0
+    # If not, we want to only consider rays that have made it to the focal plane
+    # i.e. rays with weight > 0.
+    weight_ind = chan_rays.weight > 0
+    # If no rays made it to the focal plane, there's no line -- return spectral
+    # resolution of zero.
+    if sum(weight_ind) == 0:
+        return 0
+    # Else, if this a good order, compute the position and FWHM of the non-zero weight rays,
+    # and return the resolving power estimate.
     else:
         try: 
-            x,FWHMx = abs(mean(chan_rays.x[order_ind])),ArcUtil.compute_FWHM(chan_rays.x[order_ind])
+            x,FWHMx = abs(mean(chan_rays.x[weight_ind])),ArcUtil.compute_FWHM(chan_rays.x[weight_ind])
         except:
             pdb.set_trace()
         return x/FWHMx
@@ -104,32 +114,33 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
                     ArcusR[i,j,k],ArcusEA[i,j,k] = 0,0
                 else:
                     ArcusR[i,j,k],ArcusEA[i,j,k] = compute_order_res(chan_rays,orders[k]),compute_order_EA(chan_rays,orders[k],convert_factor = illum_area/float(N))
-                    
-                    compute_perf_by_orders(chan_rays,convert_factor = illum_area/float(N),all_orders = orders)
-                    # Converting the rays back to instrument coordinates for storage.
-                    try:
-                        opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
-                    except:
-                        pdb.set_trace()
-                    instrum_ray_dict['OC' + str(i) + '_WaveStep' + str(j)] = chan_rays
+                pdb.set_trace()
+                
+    #                compute_perf_by_orders(chan_rays,convert_factor = illum_area/float(N),all_orders = orders)
+    #                # Converting the rays back to instrument coordinates for storage.
+    #                try:
+    #                    opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
+    #                except:
+    #                    pdb.set_trace()
+    #                instrum_ray_dict['OC' + str(i) + '_WaveStep' + str(j)] = chan_rays
     
-            if j % 20 == 0:
-                dict_for_merge = copy.deepcopy(instrum_ray_dict)
-                instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
-                f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
-                print '\n' + 'Dumping to pickle file....' + '\n'
-                cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
-                instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
-                f.close()
+    #        if j % 20 == 0:
+    #            dict_for_merge = copy.deepcopy(instrum_ray_dict)
+    #            instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
+    #            f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
+    #            print '\n' + 'Dumping to pickle file....' + '\n'
+    #            cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
+    #            instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
+    #            f.close()
    
-    dict_for_merge = copy.deepcopy(instrum_ray_dict)
-    instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
-    print '\n' + 'Dumping to pickle file....' + '\n'
-    f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
-    cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
-    f.close()
-    instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
-    return ArcusR,ArcusEA
+    #dict_for_merge = copy.deepcopy(instrum_ray_dict)
+    #instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
+    #print '\n' + 'Dumping to pickle file....' + '\n'
+    #f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
+    #cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
+    #f.close()
+    #instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
+    #return ArcusR,ArcusEA
 
 #def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):    
 #    # Scanning across optical channel (i), wavelength (j) , and order (k).

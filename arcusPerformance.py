@@ -134,7 +134,7 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
     else:
         geff_data = genfromtxt(grat_eff_file,delimiter = '\t',dtype = float)
     # Sorting the list.
-    wave,theta,order = unique(geff_data[:,0]),unique(geff_data[:,1]),range(-4,16,1)
+    wave,theta,order = unique(geff_data[:,0])/10**6,unique(geff_data[:,1]),range(-4,16,1)
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func
