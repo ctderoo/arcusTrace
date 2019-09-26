@@ -129,26 +129,6 @@ def GratFacetTrace(ray_object,facet):
     if facet.diff_eff == True:
         weight *= facet.geff_func((wavelengths,thetas,orders))
     
-    ## Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
-    ## function or given by the user by itself.
-    ## pdb.set_trace()
-    #if isinstance(facet.order_select,int):
-    #    order = ones(len(init_rays[0]))*facet.order_select
-    #elif facet.order_select is None:
-    #    try:
-    #        # The geff_func is typically specified in terms of nanometers. The geff_func is currently programmed to output
-    #        # an order of -1000 if the ray would be absorbed (i.e. doesn't transmit or diffracts outside 0th to 12th order.
-    #        order,crit,order_cdf = ArcPerf.pick_order(facet.geff_func,thetas,wavelengths*10**6)
-    #        absorbed_ind = order == -1000
-    #        v_ind_all = logical_or(v_ind_all,absorbed_ind)
-    #        #sgrat_rays = tran.vignette(sgrat_rays,ind = absorbed_ind)
-    #        #order = order[nonabsorbed_ind]
-    #    except:
-    #        print 'Likely issue: facet has auto order selection on, but no defined reflectivity function. Assess.'
-    #        pdb.set_trace()
-    #else:
-    #    raise TypeError("Variable 'order_select' is not an integer or None -- this is an issue.")
-    
     # If there are rays hitting the grating, do the transform and diffraction. Otherwise, pass the
     # the empty ray object.
     try:
