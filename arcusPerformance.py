@@ -121,8 +121,8 @@ def apply_debye_waller_weighting(rays,debye_waller_file = grat_debye_waller_fn):
         return exp(-2*pi*sigma/d)
     header,data = read_caldb_csvfile(debye_waller_file)
     d,sigma = data[0,0],data[0,1]
-    threshold = debye_waller(d,sigma)*ones(len(rays[0]))
-    return threshold
+    # threshold = debye_waller(d,sigma)*ones(len(rays[0]))
+    return debye_waller(d,sigma)
 
 def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
     '''
