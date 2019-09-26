@@ -27,7 +27,9 @@ def id_facet_for_rays(ray_object,facet_dict):
     for key in facet_dict.keys():
         grat_rays = ArcUtil.do_ray_transform_to_coordinate_system(rays,facet_dict[key].facet_coords)
         surf.flat(grat_rays)
-        bool_list = (grat_rays[1] < facet_dict[key].xsize/2)*(grat_rays[1] > -facet_dict[key].xsize/2)*(grat_rays[2] < facet_dict[key].ysize/2)*(grat_rays[2] > -facet_dict[key].ysize/2)
+        bool_list = (grat_rays[1] < facet_dict[key].xsize/2)*(grat_rays[1] > -facet_dict[key].xsize/2)*\
+            (grat_rays[2] < facet_dict[key].ysize/2)*(grat_rays[2] > -facet_dict[key].ysize/2)*\
+            (ray_object.weight > 0)
         facet_hit[bool_list] = facet_dict[key].facet_num
     ray_object.facet_hit = facet_hit
 
@@ -109,25 +111,27 @@ def GratFacetTrace(ray_object,facet):
     # Getting the PyXFocus rays from the object.
     init_rays = ray_object.yield_prays()
     wavelengths = ray_object.wave
+    weight = ray_object.weight
     
     v_ind_all = zeros(len(init_rays[1]),dtype = bool)
     
     # Performing the grating structure vignetting.
     if facet.L1supp == True:
-        L1_vig_ind = ArcPerf.apply_support_vignetting(init_rays,support = 'L1')
-        v_ind_all = logical_or(v_ind_all,L1_vig_ind)
+        weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L1')
+        # v_ind_all = logical_or(v_ind_all,L1_vig_ind)
     if facet.L2supp == True:
-        L2_vig_ind = ArcPerf.apply_support_vignetting(init_rays,support = 'L2')
-        v_ind_all = logical_or(v_ind_all,L2_vig_ind)
+        weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L2')
+        # v_ind_all = logical_or(v_ind_all,L2_vig_ind)
     if facet.debye_waller == True:
-        debye_waller_vig_ind = ArcPerf.apply_debye_waller(init_rays)
-        v_ind_all = logical_or(v_ind_all,debye_waller_vig_ind)
+        weight *= ArcPerf.apply_debye_waller_weighting(init_rays)
+        # v_ind_all = logical_or(v_ind_all,debye_waller_vig_ind)
 
     # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
     thetas = anal.indAngle(init_rays,normal = -facet.facet_coords.zhat)*180/pi
     
     # Creating the order vectors -- they can be specified to have the appropriate order distribution based on a grating efficiency
     # function or given by the user by itself.
+    # pdb.set_trace()
     if isinstance(facet.order_select,int):
         order = ones(len(init_rays[0]))*facet.order_select
     elif facet.order_select is None:
@@ -164,20 +168,22 @@ def GratFacetTrace(ray_object,facet):
     # Now we apply the vignetting to all the PyXFocus rays, and undo the original
     # coordinate transformation (i.e. undoing the transform to the facet_coords done
     # at the start of this function)
-    raw_facet_rays = tran.vignette(facet_rays,ind = ~v_ind_all)
-    transmitted_orders = order[~v_ind_all]
-    theta_on_grat = thetas[~v_ind_all]
+    # raw_facet_rays = tran.vignette(facet_rays,ind = ~v_ind_all)
+    transmitted_orders = zeros(len(order))
+    transmitted_orders[weight > 0] = order[weight > 0]
+    theta_on_grat = full(len(thetas),nan)
+    theta_on_grat[weight > 0] = thetas[weight > 0]
     
     # If there are rays left, transform them back. If there are no more rays, don't transform -- just use the blank ray object.
     try:
-        reref_facet_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_facet_rays,facet.facet_coords)
+        reref_facet_rays = ArcUtil.undo_ray_transform_to_coordinate_system(facet_rays,facet.facet_coords)
     except:
         print 'No rays on the facet -- skipping...'
-        reref_facet_rays = raw_facet_rays
+        reref_facet_rays = facet_rays
         
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.
-    facet_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
+    facet_ray_object = ray_object.yield_object_indices(ind = ones(len(facet_rays[0]),dtype = bool))
     facet_ray_object.set_prays(reref_facet_rays)
 
     # Adding two new attributes to our ray object:
@@ -199,6 +205,13 @@ def CATPetalTrace(ray_object,facet_dict):
         ray_ind_this_facet = ray_object.facet_hit == facet_dict[key].facet_num
         facet_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_facet)
         facet_ray_dict[key] = GratFacetTrace(facet_ray_object,facet_dict[key])
+    
+    missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.facet_hit), \
+        ray_object.weight == 0))
+    missed_rays.weight *= 0
+    missed_rays.theta_on_facet = full(len(missed_rays.x),nan)
+    missed_rays.order = zeros(len(missed_rays.x))
+    facet_ray_dict['CAT Miss'] = missed_rays
             
     facet_ray_object = ArcRays.merge_ray_object_dict(facet_ray_dict)
     return facet_ray_object

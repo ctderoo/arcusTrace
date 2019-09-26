@@ -39,7 +39,7 @@ def id_ccd_for_rays(ray_object,ccd_dict):
         copy_rays = ArcUtil.copy_rays(rays)
         ccd_plane_rays = ArcUtil.do_ray_transform_to_coordinate_system(copy_rays,ccd_dict[key].ccd_coords)
         surf.flat(ccd_plane_rays)
-        bool_list = check_size(ccd_plane_rays,(ccd_dict[key].xwidth,ccd_dict[key].ywidth))
+        bool_list = logical_and(ray_object.weight > 0, check_size(ccd_plane_rays, (ccd_dict[key].xwidth,ccd_dict[key].ywidth)))
         ccd_hit[bool_list] = ccd_dict[key].ccd_num
     ray_object.ccd_hit = ccd_hit
 
@@ -57,33 +57,35 @@ def ccdTrace(ray_object,ccd):
     '''
     init_rays = ray_object.yield_prays()
     wavelength = ray_object.wave
+    weight = ray_object.weight
 
-    v_ind_all = zeros(len(init_rays[0]),dtype = bool)
+    # v_ind_all = zeros(len(init_rays[0]),dtype = bool)
     
     # Performing all the vignetting due to detector effects.
     for i in range(len(ccd.det_effects)):
-        vig_list = ArcPerf.apply_detector_effect_vignetting(init_rays,wavelength,ccd.det_effects[i].filter_func)
-        v_ind_all = logical_or(v_ind_all,vig_list)
+        weight *= ArcPerf.apply_detector_effect_weighting(init_rays,wavelength,ccd.det_effects[i].filter_func)
+        # v_ind_all = logical_or(v_ind_all,vig_list)
     
     # Implemented hot fix on 2/14/19 -- mismatch between length of order vector vs. position vector. Stems from a problem 
     # of assignment on the detector side -- if a handful of rays are vignetted by the CCD vignetting, the ArcUtil.undo_transform
     # function throws an error, causing us to assign the ray object the position of the original rays (nonzero length) rather than the vignetted (zero length)
     # rays. However, the order attribute is properly vignetted to zero length. This later results in an error due to the mismatch of the order vector vs. the position vector.
+    
     try: 
         ccd_rays = ArcUtil.do_ray_transform_to_coordinate_system(init_rays,ccd.ccd_coords)
         surf.flat(ccd_rays)
-        raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
+        # raw_ccd_rays = tran.vignette(ccd_rays,ind = ~v_ind_all)
     except:
         pdb.set_trace()
     # Per comments on line 68, this should result in the same length order vs. position vector.
     try:
-        reref_ccd_rays = ArcUtil.undo_ray_transform_to_coordinate_system(raw_ccd_rays,ccd.ccd_coords)
+        reref_ccd_rays = ArcUtil.undo_ray_transform_to_coordinate_system(ccd_rays,ccd.ccd_coords)
     except:
-        reref_ccd_rays = raw_ccd_rays
+        reref_ccd_rays = ccd_rays
     
     # Finally, reconstructing a vignetted ray object with the correctly tracked parameters, and
     # setting the ray objects PyXFocus rays to be those traced here.
-    ccd_ray_object = ray_object.yield_object_indices(ind = ~v_ind_all)
+    ccd_ray_object = ray_object.yield_object_indices(ind = ones(len(reref_ccd_rays[0]),dtype = bool))
     ccd_ray_object.set_prays(reref_ccd_rays)
     
     if len(ccd_ray_object.x) != len(reref_ccd_rays[1]):
@@ -108,6 +110,11 @@ def DetectorArrayTrace(ray_object,ccd_dict):
                 det_ray_dict[key] = ccdTrace(ccd_ray_object,ccd_dict[key])
             except:
                 pdb.set_trace()
+
+    missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.ccd_hit), \
+        ray_object.weight == 0))
+    missed_rays.weight *= 0
+    det_ray_dict['Detector Miss'] = missed_rays
             
     ccd_ray_object = ArcRays.merge_ray_object_dict(det_ray_dict)
     return ccd_ray_object
