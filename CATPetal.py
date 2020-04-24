@@ -185,7 +185,7 @@ def CATPetalTrace(ray_object,facet_dict):
         ray_ind_this_facet = ray_object.facet_hit == facet_dict[key].facet_num
         facet_ray_object = ray_object.yield_object_indices(ind = ray_ind_this_facet)
         facet_ray_dict[key] = GratFacetTrace(facet_ray_object,facet_dict[key])
-    
+
     missed_rays = ray_object.yield_object_indices(ind = logical_or(isnan(ray_object.facet_hit), \
         ray_object.weight == 0))
     missed_rays.weight *= 0

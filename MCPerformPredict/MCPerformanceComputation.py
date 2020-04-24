@@ -54,8 +54,6 @@ def single_channel_trace(opt_chan,det_array,wavelength,order,N,fs_dist = None):
 
     # Hit the shared Arcus Focal Plane.
     det_rays = ArcDet.DetectorArrayTrace(instrum_chan_rays,det_array.fpa_dets)
-    
-    print len(instrum_chan_rays.x) - len(det_rays.x)
 
     if len(det_rays.order) != len(det_rays.x):
         pdb.set_trace()
@@ -90,13 +88,7 @@ def compute_order_res(chan_rays,order,threshold = 0):
         return x/FWHMx
 
 def compute_order_EA(chan_rays,order,convert_factor):
-    #order_ind = chan_rays.order == order
     return sum(chan_rays.weight)*convert_factor
-
-#def compute_perf_by_orders(chan_rays,convert_factor,all_orders = range(0,13,1)):
-#    res = asarray([compute_order_res(chan_rays,order) for order in all_orders])
-#    ea = asarray([compute_order_EA(chan_rays,order,convert_factor) for order in all_orders])
-#    return res,ea
 
 def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):    
     # Scanning across optical channel (i), wavelength (j) , and order (k).

@@ -77,15 +77,16 @@ def XOUTrace(ray_object,xou):
         # In case our sampling is so sparse that there are no rays fulfilling this condition.
         if sum(tr_ind) == 0: 
             continue
-            
-        surf.spoPrimary(int_rays,r,xou.focal_length,ind = logical_and(tr_ind, weight > 0))
+        
+        # Changed spoPrimary/spoSecondary to functionally be f - DeltaX, as it is in Eq. 14 in Willingale et al. 2013 (https://arxiv.org/ftp/arxiv/papers/1307/1307.1709.pdf)
+        surf.spoPrimary(int_rays,r,xou.fminusDeltaX,ind = logical_and(tr_ind, weight > 0))
         tran.reflect(int_rays,ind = logical_and(tr_ind, weight > 0))
         if xou.ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.
             weight *= ArcPerf.ref_weighting_ind(int_rays,wavelength,xou.ref_func,ind = logical_and(tr_ind, weight > 0))
         
-
-        surf.spoSecondary(int_rays,r,xou.focal_length,ind = logical_and(tr_ind, weight > 0))
+        
+        surf.spoSecondary(int_rays,r,xou.fminusDeltaX,ind = logical_and(tr_ind, weight > 0))
         tran.reflect(int_rays,ind = logical_and(tr_ind, weight > 0))
         if xou.ref_func is not None:
             # Calculating the rays lost to absorption. This enters as vignetting after passing through the entire SPO.

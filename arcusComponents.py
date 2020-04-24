@@ -53,14 +53,24 @@ class xou:
         self.primary_length = plength
         self.secondary_length = slength
         self.clocking_angle = clock_ang
+        # Sets the graze angle correctly for a WS design.
+        self.fminusDeltaX = sqrt(self.focal_length**2 - self.plate_radii[16]**2)
         
         # XOU-specific coordinate system, as specified from the instrument coordinate system.
-        self.xou_coords = coordinate_system(0.,0.,12000.,array([cos(clock_ang),-sin(clock_ang),0.]),array([sin(clock_ang),cos(clock_ang),0.,]),array([0.,0.,1.,]))
+        self.xou_coords = coordinate_system(0.,0.,self.fminusDeltaX,\
+            array([cos(clock_ang),-sin(clock_ang),0.]),\
+            array([sin(clock_ang),cos(clock_ang),0.,]),\
+            array([0.,0.,1.,]))
+
+        #self.xou_coords = coordinate_system(0.,0.,12000.,\
+        #    array([cos(clock_ang),-sin(clock_ang),0.]),\
+        #    array([sin(clock_ang),cos(clock_ang),0.,]),\
+        #    array([0.,0.,1.,]))
         
         # SPO raytracing specific parameters
         self.scatter = ['Gaussian','Gaussian']
-        self.dispdir_scatter_val = 1.93/2.35*5e-6
-        self.crossdispdir_scatter_val = 15.5/2.35*5e-6
+        self.dispdir_scatter_val = 0.0#1.93/2.35*5e-6
+        self.crossdispdir_scatter_val = 0.0#15.5/2.35*5e-6
         self.ref_func = None
         self.plate_coating = 'NA'
         self.plate_roughness = NaN
@@ -186,12 +196,6 @@ def read_caldb_csvfile(fn):
     return header,data
 
 class ArcusChannel(object):
-    ''' Default class variables '''
-    # default_xou_pointer = 'C:/Users/swarm/Software/python_repository/arcusTrace/ParamFiles/Arcus_SPO_XOU_Specs_Rev1p0_171112.csv'
-    # default_xou_ref_pointer = 'C:/Users/swarm/Software/ReflectLib/SL_LSi02_LThick1p0_LRough0p4_SSi_SRough0p0_Pol1_CXRO.npy'
-    #MLMirror_L1SiC_L2Ir_SubSi_L1Thick_6p0L2Thick_10p0_Rough4p00AngRMS_X-rayRefData.npy'
-    # default_facet_pointer = 'C:/Users/swarm/Software/python_repository/arcusTrace/ParamFiles/Arcus_CATGrating_Facets_Specs_Rev1p0_171112.csv'
-    # default_diff_eff_pointer = 'C:/Users/swarm/Software/Bitbucket/caldb-inputdata/gratings/Si_4um_deep_30pct_dc_extended.csv'
     
     def __init__(self,chan_num, chan_coords = OC1_coords,xou_pointer = default_xou_pointer,facet_pointer = default_facet_pointer,\
                xou_ref_pointer = default_xou_ref_pointer,order_select = None, diff_eff_pointer = default_diff_eff_pointer):
