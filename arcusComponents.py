@@ -37,16 +37,18 @@ OC4_coords = coordinate_system(-300.,7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),
 ############################################
 
 class xou:
-    def __init__(self, xou_num, inner_radius, outer_radius, azwidth, plength, slength, clock_ang):
+    def __init__(self, xou_num, focal_length, z0, inner_radius, outer_radius, kink_radius, azwidth, plength, slength, clock_ang,pore_space,plate_height):
         # Tracking which XOU number this is.
         self.xou_num = xou_num
         
         # Geometric parameters
-        self.focal_length = 12000.
-        self.pore_space = 0.605
-        self.plate_height = 0.775
+        self.focal_length = focal_length
+        self.z0 = z0
+        self.pore_space = pore_space
+        self.plate_height = plate_height
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
+        self.kink_radius = kink_radius
         self.plate_radii = arange(self.inner_radius,self.outer_radius,self.plate_height)
         self.azwidth = azwidth
         self.sp_space = 0.100
