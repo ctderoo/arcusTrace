@@ -30,10 +30,6 @@ OC2_coords = coordinate_system(300.,-7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),
 OC3_coords = coordinate_system(-300.,-2.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 OC4_coords = coordinate_system(-300.,7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
 
-#OC2_coords = coordinate_system(300.,-7.5,0.,array([1.,0.,0.]),array([0.,-1.,0.]),array([0.,0.,1.]))
-#OC3_coords = coordinate_system(-300.,-2.5,0.,array([-1.,0.,0.]),array([0.,-1.,0.]),array([0.,0.,1.]))
-#OC4_coords = coordinate_system(-300.,7.5,0.,array([-1.,0.,0.]),array([0.,1.,0.]),array([0.,0.,1.]))
-
 ############################################
 
 class xou:
@@ -41,9 +37,9 @@ class xou:
         # Tracking which XOU number this is.
         self.xou_num = xou_num
         
-        # Geometric parameters
-        self.focal_length = focal_length
-        self.z0 = z0
+        # Geometric parameters.
+        self.focal_length = focal_length    # The focal length for a WS design. For Athena/Arcus, this is 12 m and is a radius.
+        self.z0 = z0                        # The distance displaced along the z-axis. This is what we might consider the focal length for a W-I design.
         self.pore_space = pore_space
         self.plate_height = plate_height
         self.inner_radius = inner_radius
@@ -55,19 +51,12 @@ class xou:
         self.primary_length = plength
         self.secondary_length = slength
         self.clocking_angle = clock_ang
-        # Sets the graze angle correctly for a WS design.
-        self.fminusDeltaX = sqrt(self.focal_length**2 - self.plate_radii[16]**2)
         
         # XOU-specific coordinate system, as specified from the instrument coordinate system.
         self.xou_coords = coordinate_system(0.,0.,self.fminusDeltaX,\
             array([cos(clock_ang),-sin(clock_ang),0.]),\
             array([sin(clock_ang),cos(clock_ang),0.,]),\
             array([0.,0.,1.,]))
-
-        #self.xou_coords = coordinate_system(0.,0.,12000.,\
-        #    array([cos(clock_ang),-sin(clock_ang),0.]),\
-        #    array([sin(clock_ang),cos(clock_ang),0.,]),\
-        #    array([0.,0.,1.,]))
         
         # SPO raytracing specific parameters
         self.scatter = ['Gaussian','Gaussian']
