@@ -14,7 +14,6 @@ import PyXFocus.conicsolve as conic
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.arcusRays as ArcRays
-import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # CAT Grating Related Functions
@@ -68,44 +67,45 @@ def prop_to_grat(rays,xgrat,ygrat,zgrat,normgrat):
 def make_rot_matrix(tgrat,pgrat,ngrat):
     return transpose([tgrat,pgrat,ngrat])
 
-def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4):
-    '''
-    Loosely based on: https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-    '''
-    grat_rays = ArcUtil.copy_rays(rays)
-    R = make_rot_matrix(tgrat,pgrat,ngrat)
-    a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
+# Is this not needed? It's the only function that calls cfpar, which makes me think it's depreciated. 5/5/20.
+#def CATgratTrace(rays,order,xgrat,ygrat,zgrat,tgrat,pgrat,ngrat,dgrat = 2.00e-4):
+#    '''
+#    Loosely based on: https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+#    '''
+#    grat_rays = ArcUtil.copy_rays(rays)
+#    R = make_rot_matrix(tgrat,pgrat,ngrat)
+#    a1,a2,a3 = tran.tr.euler_from_matrix(R,'sxyz')
     
-    tran.transform(grat_rays,xgrat,ygrat,zgrat,a1,a2,a3)
-    surf.flat(grat_rays)
+#    tran.transform(grat_rays,xgrat,ygrat,zgrat,a1,a2,a3)
+#    surf.flat(grat_rays)
     
-    tran.grat(grat_rays,dgrat,order,grat_rays[0])
-    tran.reflect(grat_rays)
+#    tran.grat(grat_rays,dgrat,order,grat_rays[0])
+#    tran.reflect(grat_rays)
     
-    tran.transform(grat_rays,0,0,0,0, 0,-a3)
-    tran.transform(grat_rays,0,0,0,0,-a2,0)
-    tran.transform(grat_rays,0,0,0,-a1,0,0)
-    tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
-    return grat_rays
+#    tran.transform(grat_rays,0,0,0,0, 0,-a3)
+#    tran.transform(grat_rays,0,0,0,0,-a2,0)
+#    tran.transform(grat_rays,0,0,0,-a1,0,0)
+#    tran.transform(grat_rays,-xgrat,-ygrat,-zgrat,0,0,0)
+#    return grat_rays
 
-    for j in range(cfpar.N_grats):
-        # Selecting the rays hitting the jth grating and creating a separate selection of "single grating rays" -- sgrat_rays
-        sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
-                                                cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
+#    for j in range(cfpar.N_grats):
+#        # Selecting the rays hitting the jth grating and creating a separate selection of "single grating rays" -- sgrat_rays
+#        sgrat_rays = grat_ray_select(rays,cfpar.xgrats[j],cfpar.ygrats[j],cfpar.zgrats[j],\
+#                                                cfpar.tgrats[j],cfpar.pgrats[j],cfpar.ngrats[j],cfpar.grat_dims[0],cfpar.grat_dims[1])
     
         
-        #pdb.set_trace()
-        # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"
-        # rays that don't pass through a grating, so some care is required.
-        if j == 0:
-            diff_rays = sdiff_rays
-            diff_orders = order
-            grat_hit = ones(len(sdiff_rays[0]))*j
-        else:
-            diff_rays = hstack((diff_rays,sdiff_rays))
-            diff_orders = hstack((diff_orders,order))
-            grat_hit = hstack((grat_hit,ones(len(sdiff_rays[0]))*j))
-    return diff_rays,diff_orders,grat_hit
+#        #pdb.set_trace()
+#        # Now tracking the output of diffracted rays (diff_rays) and which ray hits which grating. This effectively "auto-vignettes"
+#        # rays that don't pass through a grating, so some care is required.
+#        if j == 0:
+#            diff_rays = sdiff_rays
+#            diff_orders = order
+#            grat_hit = ones(len(sdiff_rays[0]))*j
+#        else:
+#            diff_rays = hstack((diff_rays,sdiff_rays))
+#            diff_orders = hstack((diff_orders,order))
+#            grat_hit = hstack((grat_hit,ones(len(sdiff_rays[0]))*j))
+#    return diff_rays,diff_orders,grat_hit
 
 def GratFacetTrace(ray_object,facet):
     # Getting the PyXFocus rays from the object.

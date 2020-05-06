@@ -282,13 +282,11 @@ class ArcusChannel(object):
     
 class ArcusFPA(object):
     ''' Class wide variables go here'''
-    # default_det_pointer = 'C:/Users/swarm/Software/python_repository/arcusTrace/ParamFiles/Arcus_DetectorArray_Specs_Rev3p0_171211.csv'
-    # bitbucket_path = 'C:/Users/swarm/Software/Bitbucket/caldb-inputdata'
-    default_det_qe_fn = bitbucket_path + '/detectors/qe.csv'
-    default_det_contam_fn = bitbucket_path + '/detectors/contam.csv'
-    default_opt_block_fn = bitbucket_path + '/filters/opticalblocking.csv'
-    default_uv_block_fn = bitbucket_path + '/filters/sifilter.csv'
-    default_Si_mesh_block_fn = bitbucket_path + '/filters/uvblocking.csv'
+    default_det_qe_fn = caldb_directory + '/detectors/qe.csv'
+    default_det_contam_fn = caldb_directory + '/detectors/contam.csv'
+    default_opt_block_fn = caldb_directory + '/filters/opticalblocking.csv'
+    default_uv_block_fn = caldb_directory + '/filters/sifilter.csv'
+    default_Si_mesh_block_fn = caldb_directory + '/filters/uvblocking.csv'
 
     def __init__(self,fpa_coords = instrument_coord_sys,det_pointer = default_det_pointer,
                  det_qe_fn = default_det_qe_fn,det_contam_fn = default_det_contam_fn,opt_block_fn = default_opt_block_fn, uv_block_fn = default_uv_block_fn,Si_mesh_block_fn = default_Si_mesh_block_fn):

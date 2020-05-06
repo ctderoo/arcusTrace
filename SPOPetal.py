@@ -19,7 +19,6 @@ import PyXFocus.analyses as anal
 import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusRays as ArcRays
-import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # SPO-Related Functions

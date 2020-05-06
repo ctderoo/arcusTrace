@@ -14,7 +14,6 @@ import PyXFocus.conicsolve as conic
 import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.arcusRays as ArcRays
-import arcusTrace.ParamFiles.arcus_params_rev1p8 as cfpar
 
 ####################################################################
 # Detector-related functions.
