@@ -33,7 +33,7 @@ OC4_coords = coordinate_system(-300.,7.5,0.,array([1.,0.,0.]),array([0.,1.,0.]),
 ############################################
 
 class xou:
-    def __init__(self, xou_num, focal_length, z0, inner_radius, outer_radius, kink_radius, azwidth, plength, slength, clock_ang,pore_space,plate_height):
+    def __init__(self, xou_num, focal_length, z0, inner_radius, outer_radius, kink_radius, azwidth, plength, slength, clock_ang, pore_space, plate_height):
         # Tracking which XOU number this is.
         self.xou_num = xou_num
         
@@ -53,7 +53,7 @@ class xou:
         self.clocking_angle = clock_ang
         
         # XOU-specific coordinate system, as specified from the instrument coordinate system.
-        self.xou_coords = coordinate_system(0.,0.,self.fminusDeltaX,\
+        self.xou_coords = coordinate_system(0.,0.,self.z0,\
             array([cos(clock_ang),-sin(clock_ang),0.]),\
             array([sin(clock_ang),cos(clock_ang),0.,]),\
             array([0.,0.,1.,]))
@@ -219,8 +219,10 @@ class ArcusChannel(object):
         xou_header = xou_header.split(",")
         
         # Keys needed to initialize the Arcus XOUs.
-        needed_init_keys = ['xou_num','chan_id','MM_num','row_num','inner_radius','outer_radius','azwidth','clocking_angle','primary_length','secondary_length']
-        dtype_init_keys = [int,int,int,int,float,float,float,float,float,float]
+        needed_init_keys = ['xou_num','chan_id','MM_num','row_num','focal_length', 'z0',\
+                            'inner_radius','outer_radius','kink_radius','azwidth','clocking_angle','primary_length', \
+                            'secondary_length','pore_space','plate_height']
+        dtype_init_keys = [int,int,int,int,float,float,float,float,float,float,float,float,float,float,float]
         def selector(values,ind,dtypes = dtype_init_keys):
             return dtypes[ind](values[ind])
         
@@ -229,8 +231,9 @@ class ArcusChannel(object):
         chan_xous = dict()
         for i in range(len(xou_data)):
             xou_chars = xou_data[i].split(",")
-            xou_num,chan_id,MM_num,row_num,inner_radius,outer_radius,azwidth,clock_ang,plength,slength = [selector(xou_chars,ind[j]) for j in range(len(ind))]
-            chan_xous['XOU' + str(xou_num)] = xou(xou_num,inner_radius,outer_radius,azwidth,plength,slength,clock_ang)
+            xou_num,chan_id,MM_num,row_num,focal_length,z0,inner_radius,outer_radius,kink_radius,azwidth,clock_ang,plength,slength,pore_space,plate_height = [selector(xou_chars,ind[j]) for j in range(len(ind))]
+            chan_xous['XOU' + str(xou_num)] = xou(xou_num,focal_length,z0,inner_radius,outer_radius,kink_radius,\
+                azwidth,plength,slength,clock_ang,pore_space, plate_height)
             chan_xous['XOU' + str(xou_num)].set_row(row_num)
             chan_xous['XOU' + str(xou_num)].set_chan(chan_id)
             chan_xous['XOU' + str(i)].set_MM(MM_num)
