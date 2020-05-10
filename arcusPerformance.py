@@ -120,7 +120,7 @@ def apply_debye_waller_weighting(rays,debye_waller_file = grat_debye_waller_fn):
     d,sigma = data[0,0],data[0,1]
     return debye_waller(d,sigma)
 
-def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
+def make_geff_interp_func(grat_eff_file = grat_eff_fn):
     '''
     From the grating efficiency file in the CALDB directory, produce an interpolation function for
     grating efficiency lookup as a function of incidence angle, wavelength, and order.
@@ -129,12 +129,16 @@ def make_geff_interp_func(grat_eff_file = grat_eff_fn,style = 'old'):
     Output:
     geff_func -- a lookup function as a function of incidence angle, wavelength, and order.
     '''
-    if style == 'old':
-        geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
-    else:
-        geff_data = genfromtxt(grat_eff_file,delimiter = '\t',dtype = float)
+    #if style == 'old':
+    #    geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    #else:
+    #    geff_data = genfromtxt(grat_eff_file,delimiter = '\t',dtype = float)
     # Sorting the list.
-    wave,theta,order = unique(geff_data[:,0])/10**6,unique(geff_data[:,1]),range(-4,16,1)
+
+    geff_header,geff_data = read_caldb_csvfile(grat_eff_file)
+    pdb.set_trace()
+    # Need to git note that I've disabled "New" vs. "Old" efficiency functionality.
+    wave,theta,order = unique(geff_data[:,0])/10**6,unique(geff_data[:,1]),geff_header[2:].astype('int')
     geff = geff_data[:,2:].reshape(len(wave),len(theta),len(order))
     geff_func = RGI(points = (wave,theta,order),values = geff)
     return geff_func

@@ -245,7 +245,7 @@ class ArcusChannel(object):
     def set_chan_facets(self,facet_pointer,order_select,diff_eff_pointer):
         facet_header,facet_data = read_caldb_csvfile(facet_pointer)
         if order_select is None:
-            geff_func = ArcPerf.make_geff_interp_func(diff_eff_pointer,style = 'New')
+            geff_func = ArcPerf.make_geff_interp_func(diff_eff_pointer)
         facet_header = facet_header.split(",")
         
         # Keys needed to initialize the Arcus XOUs.
