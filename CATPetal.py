@@ -121,8 +121,9 @@ def GratFacetTrace(ray_object,facet):
         weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L2')
 
     # Gotta fix this.
+    pdb.set_trace()
     if facet.debye_waller == True:
-        weight *= ArcPerf.apply_debye_waller_weighting(init_rays)
+        weight *= ArcPerf.apply_debye_waller_weighting(orders)
 
     # Negative sign necessary due to definition of grating normal away from telescope focus, and ray direction towards the focus.
     thetas = anal.indAngle(init_rays,normal = -facet.facet_coords.zhat)*180/pi
