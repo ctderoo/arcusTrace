@@ -78,8 +78,8 @@ class ArcusRays:
         cPickle.dump(attribs,f)
         f.close()  
 
-def make_channel_source(num_rays,wave,order,xextent = 500.,yextent = 675.,fs_dist = None):
-    illum_height = 575
+def make_channel_source(num_rays,wave,order,xextent = 450.,yextent = 500.,fs_dist = None):
+    illum_height = 550
     rays = source.rectbeam(xextent/2,yextent/2,num_rays)
     rays[2] = rays[2] + illum_height
     rays[6] = -ones(len(rays[6]))
@@ -95,7 +95,7 @@ def make_channel_source(num_rays,wave,order,xextent = 500.,yextent = 675.,fs_dis
     return ray_object
 
 def load_ray_object_from_pickle(pickle_file):
-    blank_ray_object = make_channel_source(1)
+    blank_ray_object = make_channel_source(1,1.24*10**-6,0)
     f = open(pickle_file,'rb')
     attribs = cPickle.load(f)
     f.close()

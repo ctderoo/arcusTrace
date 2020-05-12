@@ -27,7 +27,7 @@ import arcusTrace.MCPerformPredict.MCPerformancePlotting as ArcMCPlot
 # Functions for Performance Computation
 ################################################
 
-illum_area = 45*57.
+illum_area = 45*50.
 
 def single_channel_trace(opt_chan,det_array,wavelength,order,N,fs_dist = None):
     # Create the source, trace it through the SPO petal and the CAT grating petal.
@@ -113,15 +113,15 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
                 except:
                     pdb.set_trace()
                 instrum_ray_dict['oc' + str(i) + '_wavestep' + str(j) + '_order' + str(orders[k])] = chan_rays
-    
-        if j % 20 == 0:
-            dict_for_merge = copy.deepcopy(instrum_ray_dict)
-            instrum_ray_object = arcrays.merge_ray_object_dict(dict_for_merge)
-            f = open(pickle_path + '/individualchannels/' + fileend + '.pk1','wb')
-            print '\n' + 'dumping to pickle file....' + '\n'
-            cpickle.dump([wavelengths,orders,arcusr,arcusea],f)
-            instrum_ray_object.pickle_me(pickle_path + '/rays/' + fileend + '.pk1'.replace('.pk1','_rays.pk1'))
-            f.close()
+
+            if j % 20 == 0:
+                dict_for_merge = copy.deepcopy(instrum_ray_dict)
+                instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
+                f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
+                print '\n' + 'Dumping to pickle file....' + '\n'
+                cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
+                instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','Rays.pk1'))
+                f.close()
    
     dict_for_merge = copy.deepcopy(instrum_ray_dict)
     instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
@@ -132,37 +132,39 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
     instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
     return ArcusR,ArcusEA
 
-def do_rowbyrow_recalc(wavelengths,orders,N,fileend,pickle_path):
+def do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path):
     # Loading the rays from the _Rays.pk1 pickle file.
     print 'Loading rays from pickle file....'
     path = pickle_path + 'Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1')
     ray_object = ArcRays.load_ray_object_from_pickle(path)
     print 'Loaded!'
 
+    # I'm not sure this is working, but it'll give me a chance to mess around.
+    pdb.set_trace()
+
     ###################################
     # Establishing functions for row mapping.
     # Row number by XOU.
-    row_number = array([1,1,1,1,1,1,1,1,
-                        2,2,2,2,2,2,2,2,
-                        3,3,3,3,3,3,3,3,3,3,3,3,
-                        4,4,4,4,4,4,4,4,
-                        5,5,5,5,5,5,5,5,
-                        6,6,6,6,6,6,6,6,
-                        7,7,7,7,7,7,7,7,
-                        8,8,8,8,8,8,8,8])
-    xou_by_row = tuple(map(lambda i: (i, row_number[i]), range(68)))
-    
+    #row_number = repeat(arange(0,6),8)
+    #xou_by_row = tuple(map(lambda x: (opt_chans[0].chan_xous[x].xou_num, opt_chans[0].chan_xous[x].row_num), opt_chans[0].chan_xous.keys()))
+    xou_object = opt_chans[0].chan_xous
+    xou_keys = xou_object.keys()
+
     def return_row_ind(row_num,ray_object):
-        xous_in_row = [i for i,row in xou_by_row if row == row_num]
+        xous_in_row = [xou_object[key].xou_num for key in xou_keys if xou_object[key].row_num == row_num]
         ind = [ray_object.xou_hit[i] in xous_in_row for i in range(len(ray_object.xou_hit))]
         return ind
         
     def return_wave_ind(wavelength,ray_object):
         ind = [ray_object.wave[i] == wavelength for i in range(len(ray_object.x))]
         return ind
+
+    def return_order_ind(order,ray_object):
+        ind = [ray_object.order[i] == order for i in range(len(ray_object.x))]
+        return ind
     
     # Creating the performance metrics by row:
-    rows = arange(8) + 1
+    rows = arange(6)
     ArcusR = zeros((len(rows),len(wavelengths),len(orders)))
     ArcusEA = zeros((len(rows),len(wavelengths),len(orders)))
     
@@ -175,8 +177,10 @@ def do_rowbyrow_recalc(wavelengths,orders,N,fileend,pickle_path):
         # Scanning the row_ray object by wavelength to construct the ArcusEA.
         for j in range(len(wavelengths)):
             # Getting all the row_rays matching this wavelength.
-            wave_row_rays = row_rays.yield_object_indices(return_wave_ind(wavelengths[j],row_rays)) 
-            garbage,ArcusEA[i,j] = compute_perf_by_orders(wave_row_rays,illum_area/float(N))
+            wave_row_rays = row_rays.yield_object_indices(return_wave_ind(wavelengths[j],row_rays))
+            for k in range(len(orders)):
+                order_wave_row_rays = wave_row_rays.yield_object_indices(return_order_ind(orders[k],wave_row_rays))
+                ArcusEA[i,j,k] = compute_order_EA(chan_rays,orders[k],convert_factor = illum_area/float(N))
 
     print 'Dumping to Pickle File....'
     f = open(pickle_path + 'RowByRow/' + fileend + '_RowByRow.pk1','wb')
@@ -225,10 +229,12 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print '#'*40
     print 'Plotting/outputting the effective areas on a row-by-row basis...'
     print '#'*40 + '\n'
-    ArcusRowR,ArcusRowEA = do_rowbyrow_recalc(wavelengths,orders,N,fileend,pickle_path)
-    ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
+    try:
+        ArcusRowR,ArcusRowEA = do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path)
+        ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
+    except:
+        pdb.set_trace()
 
-    pdb.set_trace()
     return 
     
 

@@ -120,8 +120,7 @@ def GratFacetTrace(ray_object,facet):
     if facet.L2supp == True:
         weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L2')
 
-    # Gotta fix this.
-    pdb.set_trace()
+    # Multiplying in the order-weighted Debye-Waller factor.
     if facet.debye_waller == True:
         weight *= ArcPerf.apply_debye_waller_weighting(orders)
 
