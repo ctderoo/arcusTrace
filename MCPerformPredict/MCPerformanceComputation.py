@@ -91,10 +91,13 @@ def compute_order_EA(chan_rays,order,convert_factor):
     return sum(chan_rays.weight)*convert_factor
 
 def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):    
-    # Scanning across optical channel (i), wavelength (j) , and order (k).
+    # Scanning across optical channel (i), wavelength (j), and order (k).
+
+    # 05/12/20 -- depreciating the ability to save all rays. Moving to ray weighting (i.e. saving all rays) is creating serious
+    # memory problems.
     ArcusR,ArcusEA = zeros((len(opt_chans),len(wavelengths),len(orders))),zeros((len(opt_chans),len(wavelengths),len(orders)))
 
-    instrum_ray_dict = {}
+    #instrum_ray_dict = {}
     for i in range(len(opt_chans)):
         for j in range(len(wavelengths)):
             for k in range(len(orders)):
@@ -107,29 +110,29 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
                 else:
                     ArcusR[i,j,k],ArcusEA[i,j,k] = compute_order_res(chan_rays,orders[k]),compute_order_EA(chan_rays,orders[k],convert_factor = illum_area/float(N))
                
-                # Moving the rays back to the global instrument coordinates, and adding them to the total dictionary.
-                try:
-                    opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
-                except:
-                    pdb.set_trace()
-                instrum_ray_dict['oc' + str(i) + '_wavestep' + str(j) + '_order' + str(orders[k])] = chan_rays
+                ## Moving the rays back to the global instrument coordinates, and adding them to the total dictionary.
+                #try:
+                #    opt_chans[i].rays_from_chan_to_instrum_coords(chan_rays)
+                #except:
+                #    pdb.set_trace()
+                #instrum_ray_dict['oc' + str(i) + '_wavestep' + str(j) + '_order' + str(orders[k])] = chan_rays
 
             if j % 20 == 0:
-                dict_for_merge = copy.deepcopy(instrum_ray_dict)
-                instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
+                #dict_for_merge = copy.deepcopy(instrum_ray_dict)
+                #instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
                 f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
                 print '\n' + 'Dumping to pickle file....' + '\n'
                 cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
-                instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','Rays.pk1'))
                 f.close()
+                #instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','Rays.pk1'))
    
-    dict_for_merge = copy.deepcopy(instrum_ray_dict)
-    instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
+    #dict_for_merge = copy.deepcopy(instrum_ray_dict)
+    #instrum_ray_object = ArcRays.merge_ray_object_dict(dict_for_merge)
     print '\n' + 'Dumping to pickle file....' + '\n'
     f = open(pickle_path + '/IndividualChannels/' + fileend + '.pk1','wb')
     cPickle.dump([wavelengths,orders,ArcusR,ArcusEA],f)
     f.close()
-    instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
+    #instrum_ray_object.pickle_me(pickle_path + '/Rays/' + fileend + '.pk1'.replace('.pk1','_Rays.pk1'))
     return ArcusR,ArcusEA
 
 def do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path):
@@ -224,16 +227,17 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print 'Plotting/outputting the effective areas on a channel-by-channel basis...'
     print '#'*40 + '\n'
     ArcMCPlot.do_channel_outputs(wavelengths,orders,ArcusR,ArcusEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
-    
-    # Plotting the effective area of the calculation on a row-by-row basis.
-    print '#'*40
-    print 'Plotting/outputting the effective areas on a row-by-row basis...'
-    print '#'*40 + '\n'
-    try:
-        ArcusRowR,ArcusRowEA = do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path)
-        ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
-    except:
-        pdb.set_trace()
+
+    # Need to fix this at a later time -- right now, it relies on the ability to reload rays (which is depreciated).    
+    ## Plotting the effective area of the calculation on a row-by-row basis.
+    #print '#'*40
+    #print 'Plotting/outputting the effective areas on a row-by-row basis...'
+    #print '#'*40 + '\n'
+    #try:
+    #    ArcusRowR,ArcusRowEA = do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path)
+    #    ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
+    #except:
+    #    pdb.set_trace()
 
     return 
     
