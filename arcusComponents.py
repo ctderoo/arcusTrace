@@ -60,8 +60,8 @@ class xou:
         
         # SPO raytracing specific parameters
         self.scatter = ['Gaussian','Gaussian']
-        self.dispdir_scatter_val = 0.0#1.93/2.35*5e-6
-        self.crossdispdir_scatter_val = 0.0#15.5/2.35*5e-6
+        self.dispdir_scatter_val = 3e-6   # Parameter combination gives 1.5" FWHM in dispersion direction, 7.0" in the cross-dispersion (HPD).
+        self.crossdispdir_scatter_val = 1.85e-5
         self.ref_func = None
         self.plate_coating = 'NA'
         self.plate_roughness = NaN
