@@ -356,5 +356,4 @@ class ArcusFPA(object):
             new_xhat,new_yhat,new_zhat = dot(rot_fpa,xhat),dot(rot_fpa,yhat),dot(rot_fpa,zhat)
             self.fpa_dets[key].ccd_coords = coordinate_system(x + fpa_x,y + fpa_y,z + fpa_z,new_xhat,new_yhat,new_zhat)
             
-    
-    
+

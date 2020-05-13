@@ -115,7 +115,8 @@ def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
 
 def apply_debye_waller_weighting(order,debye_waller_file = grat_debye_waller_fn):
     def debye_waller(d,sigma,order):
-        return exp(-2*pi*sigma/d)**order**2
+        return exp(-(2*pi*sigma*order/d)**2)
+        #return exp(-2*pi*sigma/d)**order**2   # This is super wrong.
     header,data = read_caldb_csvfile(debye_waller_file)
     d,sigma = data[0,0],data[0,1]
     return debye_waller(d,sigma,order)

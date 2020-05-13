@@ -87,6 +87,7 @@ def compute_order_res(chan_rays,order,threshold = 0):
             pdb.set_trace()
         return x/FWHMx
 
+###### Doesn't need order!
 def compute_order_EA(chan_rays,order,convert_factor):
     return sum(chan_rays.weight)*convert_factor
 
