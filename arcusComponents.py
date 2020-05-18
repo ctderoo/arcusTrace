@@ -246,8 +246,13 @@ class ArcusChannel(object):
         facet_header,facet_data = read_caldb_csvfile(facet_pointer)
         if order_select is None:
             geff_func = ArcPerf.make_geff_interp_func(diff_eff_pointer)
-        facet_header = facet_header.split(",")
-        
+
+        try:
+            facet_header = facet_header.split(",")
+        except:
+            facet_header = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
+                            'DispNX','DispNY','DispNZ','GBarNX','GBarNY','GBarNZ','NormNX','NormNY','NormNZ','xsize','ysize','period']
+
         # Keys needed to initialize the Arcus XOUs.
         needed_init_keys = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
                             'DispNX','DispNY','DispNZ','GBarNX','GBarNY','GBarNZ','NormNX','NormNY','NormNZ','xsize','ysize','period']
@@ -261,7 +266,11 @@ class ArcusChannel(object):
         
         chan_facets = dict()
         for i in range(len(facet_data)):
-            facet_chars = facet_data[i].split(",")
+            try:
+                facet_chars = facet_data[i].split(",")
+            except:
+                facet_chars = facet_data[i].tolist()
+
             facet_num,chan_id,SPO_MM_num,SPO_row_num,X,Y,Z,\
                             DispNX,DispNY,DispNZ,GBarNX,GBarNY,GBarNZ,NormNX,NormNY,NormNZ,xsize,ysize,period= [selector(facet_chars,ind[j]) for j in range(len(ind))]
             facet_coords_system = coordinate_system(X,Y,Z,array([DispNX,DispNY,DispNZ]),array([GBarNX,GBarNY,GBarNZ]),array([NormNX,NormNY,NormNZ]))

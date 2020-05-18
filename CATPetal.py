@@ -114,7 +114,6 @@ def GratFacetTrace(ray_object,facet):
     wavelengths = ray_object.wave
     weight = ray_object.weight
     
-    pdb.set_trace()
     # Performing the grating structure vignetting.
     if facet.L1supp == True:
         weight *= ArcPerf.apply_support_weighting(init_rays,support = 'L1')
