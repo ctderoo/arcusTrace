@@ -165,7 +165,7 @@ def write_spos_to_bitbucket(arcus_xous,csv_fn = 'Arcus_SPO_XOU_Specs_Rev2p0_2004
     csvfile.close()
     return
 
-def write_facets_to_bitbucket(arcus_facets,csv_fn = 'Arcus_CATGrating_Facets_Specs_Rev2p0_200424.csv'):
+def write_facets_to_bitbucket(arcus_facets,csv_fn = 'Arcus_CATGrating_Facets_Specs_Rev2p1_200518.csv'):
     sorted_facets = zip(*sorted(tuple([(arcus_facets[key].facet_num,arcus_facets[key]) for key in arcus_facets.keys()])))
     
     column_names = ['facet_num','chan_id','SPO_MM_num','SPO_row_num',\
@@ -279,6 +279,6 @@ def write_facets_to_bitbucket(arcus_facets,csv_fn = 'Arcus_CATGrating_Facets_Spe
 #    return
 
 
-write_spos_to_bitbucket(arcus_xous)
+#write_spos_to_bitbucket(arcus_xous)
 write_facets_to_bitbucket(arcus_facets)
 #write_detectors_to_bitbucket(arcus_detectors)

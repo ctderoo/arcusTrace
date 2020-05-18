@@ -85,8 +85,8 @@ class facet(object):
     def __init__(self,facet_num,xloc,yloc,zloc):
         # Setting the physical characteristics of the grating facet.
         self.facet_num = facet_num
-        self.xsize = 27
-        self.ysize = 26
+        self.xsize = 28
+        self.ysize = 28.5
         self.period = 2.00e-4
         
         self.alpha = 1.8*pi/180
