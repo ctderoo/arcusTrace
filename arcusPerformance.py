@@ -78,45 +78,13 @@ def apply_support_weighting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,
     transmission = structure_data[0]
     return transmission
 
-def apply_support_vignetting(rays,support = 'L1',L1_support_file = grat_L1vig_fn,\
-                             L2_support_file = grat_L2vig_fn,pore_transmission_file = pore_transmission_fn):
-    N = len(rays[0])
-    crit = random.random(N)
-    if support == 'L1':
-        structure_header,structure_data = read_caldb_csvfile(L1_support_file)
-    elif support == 'L2':
-        structure_header,structure_data = read_caldb_csvfile(L2_support_file)
-    elif support == 'PoreStructure':
-        structure_header,structure_data = read_caldb_csvfile(pore_transmission_file)
-    else:
-        pdb.set_trace()
-        
-    transmission = structure_data[0]
-    vig_locs = crit > transmission
-    return vig_locs
-
 ########################################################################
 # Grating efficiency, order selection, and structure vignetting.
 ########################################################################
 
-def apply_debye_waller(rays,debye_waller_file = grat_debye_waller_fn):
-    def debye_waller(d,sigma):
-        return exp(-2*pi*sigma/d)
-    
-    header,data = read_caldb_csvfile(debye_waller_file)
-    d,sigma = data[0,0],data[0,1]
-    threshold = debye_waller(d,sigma)
-    
-    N = len(rays[0])
-    crit = random.random(N)
-    vig_locs = crit > threshold
-
-    return vig_locs
-
 def apply_debye_waller_weighting(order,debye_waller_file = grat_debye_waller_fn):
     def debye_waller(d,sigma,order):
         return exp(-(2*pi*sigma*order/d)**2)
-        #return exp(-2*pi*sigma/d)**order**2   # This is super wrong.
     header,data = read_caldb_csvfile(debye_waller_file)
     d,sigma = data[0,0],data[0,1]
     return debye_waller(d,sigma,order)
@@ -197,28 +165,6 @@ def make_reflectivity_func(pointer):
     ref_func = RGI(points = (earray,garray),values = ref)
     return ref_func
 
-def ref_vignette_ind(rays,wave,ref_func,ind = None):
-    if ind is not None:
-        N = len(rays[0][ind])
-        crit = random.random(N)
-        energy = (1240./10**6)/wave[ind]
-        graze = anal.grazeAngle(rays,ind = ind)*180/pi
-        threshold = ref_func((energy,graze))
-        # Finding the numbered indices within the selection of rays given by ind.
-        ind_locs = array([i for i, x in enumerate(ind) if x])
-        # Defining a new vignetting vector that runs over all the rays (not just those where ind = True)
-        vig_locs = zeros(len(rays[0]),dtype = bool)
-        # Now selecting those rays within ind AND where the random number doesn't clear the reflectivity.
-        vig_locs[ind_locs[crit > threshold]] = True
-    else:
-        N = len(rays[0])
-        crit = random.random(N)
-        energy = (1240./10**6)/rays[0]
-        graze = anal.grazeAngle(rays)*180/pi
-        threshold = ref_func((energy,graze))
-        vig_locs = crit > threshold
-    return vig_locs
-
 def ref_weighting_ind(rays,wave,ref_func,ind = None):
     if ind is not None:
         energy = (1240./10**6)/wave[ind]
@@ -246,14 +192,6 @@ def make_detector_effect_func(eff_caldb_fn):
     wave,effect = (1.240/data[:,0]),data[:,1]
     interp_func = interp1d(wave,effect,kind = 'cubic')
     return interp_func
-
-def apply_detector_effect_vignetting(rays,wave,interp_func):
-    N = len(rays[0])
-    crit = random.random(N)
-    wave_nm = wave*10**6
-    threshold = interp_func(wave_nm)
-    vig_locs = crit > threshold
-    return vig_locs
 
 def apply_detector_effect_weighting(rays,wave,interp_func):
     wave_nm = wave*10**6
