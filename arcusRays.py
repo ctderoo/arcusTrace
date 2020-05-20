@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os
 import pdb
 import pickle,cPickle
+import astropy.io.fits as pyfits
+import datetime
 import copy
 
 import PyXFocus.sources as source
@@ -77,6 +79,37 @@ class ArcusRays:
         f = open(pickle_file,'wb')
         cPickle.dump(attribs,f)
         f.close()  
+
+    def write_to_fits(self, fits_file):
+        # Creating a FITS file compliant with the defined Arcus format. We first create a header for the primary object.
+        prihdr = pyfits.Header()
+        prihdr['ORIGIN'] = 'Univ. of Iowa'
+        prihdr['CREATOR'] = 'Casey DeRoo'
+        prihdr['DATE'] = datetime.datetime.now().isoformat()
+        prihdr['VERSION'] = '20200519152400'
+        prihdr['SATELLIT'] = 'ARCUS'
+        prihdr['DETNAM'] = '1'*16
+        prihdr['FILTER'] = 'none'
+        prihdr['CALTYPE'] = 'RAYTRACE'
+        prihdu = pyfits.PrimaryHDU(header = prihdr)
+
+        # Next, we create a table of the raytrace data.
+        time = pyfits.Column(name = 'TIME',format = 'D', array = zeros(len(self.x)), unit = 's')
+        energy = pyfits.Column(name = 'ENERGY',format = 'D', array = 1.240*10**-6/self.wave, unit = 'keV')
+        weight = pyfits.Column(name = 'WEIGHT',format = 'D', array = self.weight)
+        ra = pyfits.Column(name = 'RA',format = 'D', array = zeros(len(self.x)), unit = 'rad')
+        dec = pyfits.Column(name = 'DEC',format = 'D', array = zeros(len(self.x)), unit = 'rad')
+        pos = pyfits.Column(name = 'POS',format = '3D',dim = '(3)',array = vstack((self.x,self.y,self.z)).transpose(), unit = 'mm')
+        dir = pyfits.Column(name = 'DIR',format = '3D',dim = '(3)',array = vstack((self.vx,self.vy,self.vz)).transpose())
+        channel = pyfits.Column(name = 'CHANNEL',format = 'D', array = self.chan_num)
+        order = pyfits.Column(name = 'ORDER',format = 'D', array = self.order)
+
+        tbhdu = pyfits.BinTableHDU.from_columns([time,energy,weight,ra,dec,pos,dir,channel,order])
+        tbhdu.add_checksum()
+
+        # Now putting everything together and writing out the FITS file.
+        thdulist = pyfits.HDUList([prihdu,tbhdu])
+        thdulist.writeto(fits_file,overwrite = True)
 
 def make_channel_source(num_rays,wave,order,xextent = 450.,yextent = 500.,fs_dist = None):
     illum_height = 550

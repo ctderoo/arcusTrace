@@ -49,6 +49,7 @@ def single_channel_trace(opt_chan,det_array,wavelength,order,N,fs_dist = None):
     opt_chan.rays_from_chan_to_instrum_coords(instrum_chan_rays)
     instrum_chan_rays.chan_num = ones(len(instrum_chan_rays.x))*opt_chan.chan_num
     
+    # What is this for? Propose deletion : 5/18/20
     if len(instrum_chan_rays.order) != len(instrum_chan_rays.x):
         pdb.set_trace()
 
