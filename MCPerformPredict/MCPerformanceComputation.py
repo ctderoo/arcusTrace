@@ -234,6 +234,18 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print '#'*40 + '\n'
     ArcMCPlot.plot_ea(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
 
+    # Plotting the resolution result of the calculation for the whole configuration.
+    print '#'*40
+    print 'Plotting the resolution for the whole channel...'
+    print '#'*40 + '\n'
+    ArcMCPlot.plot_res(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+
+    # Plotting the resolution result of the calculation for the whole configuration.
+    print '#'*40
+    print 'Plotting the weak line detection merit function for the whole channel...'
+    print '#'*40 + '\n'
+    ArcMCPlot.plot_merit(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+
     # Plotting the effective area of the calculation on a channel-by-channel basis.
     print '#'*40
     print 'Plotting/outputting the effective areas on a channel-by-channel basis...'

@@ -45,6 +45,24 @@ def compute_perf_by_orders(chan_rays,convert_factor,all_orders = range(0,13,1)):
     ea = asarray([compute_order_EA(chan_rays,order,convert_factor) for order in all_orders])
     return res,ea
 
+def plot_merit(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResPlot_Uncoated.png'):
+    #####################################
+    # Resolving Power Plot.
+    plt.figure(figsize = (12,12))
+    merit = ChanRes*ChanEA
+    merit_by_channel = sum(merit,axis = 0) # Summing over channels
+    merit_by_order = sum(merit_by_channel,axis = 1) # Summing over orders
+
+    plt.plot(wavelengths*10**7,sqrt(merit_by_order))
+    plt.xlabel('Wavelength (Angstroms)')
+    plt.ylabel('Sqrt(R * EA)')
+    plt.title('Arcus Calculated Weak Line Detection Merit Function\n' + title_description)
+    
+    os.chdir(figure_directory)
+    plt.savefig(plot_fn)
+    plt.close()
+    os.chdir(home_directory)
+    
 def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResPlot_Uncoated.png'):
     #####################################
     # Resolving Power Plot.
@@ -52,7 +70,8 @@ def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResP
     plt.plot(wavelengths*10**7,calculate_avg_res(wavelengths,orders,ChanRes,ChanEA))
     plt.xlabel('Wavelength (Angstroms)')
     plt.ylabel('Resolution (lambda / Delta lambda)')
-    plt.title('Arcus Calculated Average Resolution,\n4 Channels (Traced Separately),\nUncoated (1 nm SiO2, 4 Angstrom Roughness, Si substrate),\n Full Arcus Focal Plane, No Alignment/Jitter Errors')
+    plt.title('Arcus Calculated Average Resolution,\n' + title_description)
+        #'Arcus Calculated Average Resolution,\n4 Channels (Traced Separately),\nUncoated (400 nm SiO2, 4 Angstrom Roughness, Si substrate),\n Full Arcus Focal Plane, No Alignment/Jitter Errors')
     
     os.chdir(figure_directory)
     plt.savefig(plot_fn)
