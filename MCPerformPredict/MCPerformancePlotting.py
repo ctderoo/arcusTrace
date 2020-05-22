@@ -274,7 +274,6 @@ def make_results_directories(home_directory):
     if not os.path.exists(home_directory + '/ResultPickles'):
         os.makedirs(home_directory + '/ResultPickles')
         os.makedirs(home_directory + '/ResultPickles/IndividualChannels')
-        os.makedirs(home_directory + '/ResultPickles/Rays')
         os.makedirs(home_directory + '/ResultPickles/RowByRow')
         
     csv_path = home_directory + '/ResultCSVFiles/'
@@ -292,8 +291,15 @@ def do_channel_outputs(wavelengths,orders,ArcusR,ArcusEA,fileend,csv_path,pickle
                             title_description = ea_title_description)
     return
 
-def do_rowbyrow_outputs(wavelengths,orders,ArcusRowR,ArcusRowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description):
+def do_rowbyrow_outputs(wavelengths,orders,rowR,rowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description):
     print 'Making row-by-row .csv files and plots....'
+
+    ArcusRowEA = sum(rowEA,axis = 1)    # Indices for rowEA are row, optical channel, wavelength order. So here we sum over optical channel
+    
+    # Is this right? Not a clue.
+    pdb.set_trace()
+    # Averaging resolution over all four channels, weighted by the counts in them.
+    ArcusRowR = sum(rowR*rowEA,axis = 1)/ArcusRowEA
     for n in range(len(ArcusRowR)):
         write_to_csv_file(wavelengths,orders,ArcusRowR[n],ArcusRowEA[n],\
                             csv_file_name = csv_path + 'RowByRow/' + fileend + '_Row' + str(n + 1) + '.csv',\
