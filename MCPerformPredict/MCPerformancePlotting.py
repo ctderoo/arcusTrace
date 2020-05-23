@@ -18,8 +18,6 @@ import arcusTrace.arcusUtilities as ArcUtil
 import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.arcusRays as ArcRays
 
-#import arcusTrace.MCPerformPredict.MCPerformanceComputation as ArcMCComp
-
 home_directory = os.getcwd()
 figure_directory = home_directory + '/ResultFigures'
 
@@ -45,7 +43,7 @@ def compute_perf_by_orders(chan_rays,convert_factor,all_orders = range(0,13,1)):
     ea = asarray([compute_order_EA(chan_rays,order,convert_factor) for order in all_orders])
     return res,ea
 
-def plot_merit(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResPlot_Uncoated.png'):
+def plot_merit(wavelengths,orders,ChanRes,ChanEA,plot_fn = 'default_merit.png',title_description = 'description_error'):
     #####################################
     # Resolving Power Plot.
     plt.figure(figsize = (12,12))
@@ -63,7 +61,7 @@ def plot_merit(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_Re
     plt.close()
     os.chdir(home_directory)
     
-def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResPlot_Uncoated.png'):
+def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = 'default_res.png',title_description = 'description_error'):
     #####################################
     # Resolving Power Plot.
     plt.figure(figsize = (12,12))
@@ -71,7 +69,6 @@ def plot_res(wavelengths,orders,ChanRes,ChanEA,plot_fn = '171120_arcusTrace_ResP
     plt.xlabel('Wavelength (Angstroms)')
     plt.ylabel('Resolution (lambda / Delta lambda)')
     plt.title('Arcus Calculated Average Resolution,\n' + title_description)
-        #'Arcus Calculated Average Resolution,\n4 Channels (Traced Separately),\nUncoated (400 nm SiO2, 4 Angstrom Roughness, Si substrate),\n Full Arcus Focal Plane, No Alignment/Jitter Errors')
     
     os.chdir(figure_directory)
     plt.savefig(plot_fn)
@@ -315,18 +312,13 @@ def do_rowbyrow_outputs(wavelengths,orders,rowR,rowEA,fileend,csv_path,pickle_pa
 
     ArcusRowEA = sum(rowEA,axis = 1)    # Indices for rowEA are row, optical channel, wavelength order. So here we sum over optical channel
     
-    # Is this right? Not a clue.
-    pdb.set_trace()
+    ## Is this right? Not a clue.
+    #pdb.set_trace()
     # Averaging resolution over all four channels, weighted by the counts in them.
-    ArcusRowR = sum(rowR*rowEA,axis = 1)/ArcusRowEA
-    for n in range(len(ArcusRowR)):
-        write_to_csv_file(wavelengths,orders,ArcusRowR[n],ArcusRowEA[n],\
-                            csv_file_name = csv_path + 'RowByRow/' + fileend + '_Row' + str(n + 1) + '.csv',\
-                            result_file = pickle_path + 'RowByRow/' + fileend + '_RowByRow.pk1',\
-                            description_line = csv_description)
-        plot_row_ea(wavelengths,orders,ArcusRowEA[n],\
-                            plot_fn = plot_path + 'RowByRow/' + fileend + '_Row' + str(n + 1) + '.png',\
-                            title_description = ea_title_description,\
-                            row_string = 'Row Number ' + str(n + 1))
+    weight_R = sum(rowR*rowEA,axis = 1)/ArcusRowEA
+    ArcusRowR = divide(weight_R,ArcusRowEA,out=zeros_like(weight_R),where=ArcusRowEA!=0)
+    for i in range(len(ArcusRowR)):
+        write_to_csv_file(wavelengths,orders,ArcusRowR[i],ArcusRowEA[i],csv_file_name = csv_path + 'RowByRow/' + fileend + '_Row' + str(i + 1) + '.csv', result_file = pickle_path + 'RowByRow/' + fileend + '_RowByRow.pk1',description_line = csv_description)
+        plot_row_ea(wavelengths,orders,ArcusRowEA[i],plot_fn = plot_path + 'RowByRow/' + fileend + '_Row' + str(i + 1) + '.png', title_description = ea_title_description, row_string = 'Row Number ' + str(i + 1))
     return
 

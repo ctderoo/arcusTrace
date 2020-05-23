@@ -144,7 +144,7 @@ def ArcusMCTrace(opt_chans,fpa,wavelengths,N,orders,fileend,pickle_path):
     cPickle.dump([wavelengths,orders,rowR,rowEA],f)
     f.close()
 
-    return ArcusR,ArcusEA
+    return ArcusR,ArcusEA,rowR,rowEA
 
 # Depreciated as of 5/22/20. Now doing row-by-row internally since recalculating from stored rays not an option.
 #def do_rowbyrow_recalc(opt_chans,wavelengths,orders,N,fileend,pickle_path):
@@ -234,25 +234,32 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print '#'*40 + '\n'
     ArcMCPlot.plot_ea(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
 
-    # Plotting the resolution result of the calculation for the whole configuration.
-    print '#'*40
-    print 'Plotting the resolution for the whole channel...'
-    print '#'*40 + '\n'
-    ArcMCPlot.plot_res(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
-
-    # Plotting the resolution result of the calculation for the whole configuration.
-    print '#'*40
-    print 'Plotting the weak line detection merit function for the whole channel...'
-    print '#'*40 + '\n'
-    ArcMCPlot.plot_merit(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
-
     # Plotting the effective area of the calculation on a channel-by-channel basis.
     print '#'*40
     print 'Plotting/outputting the effective areas on a channel-by-channel basis...'
     print '#'*40 + '\n'
     ArcMCPlot.do_channel_outputs(wavelengths,orders,ArcusR,ArcusEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
+    
+    # Plotting the resolution result of the calculation for the whole configuration.
+    print '#'*40
+    print 'Plotting the resolution for the whole channel...'
+    print '#'*40 + '\n'
+    try:
+        ArcMCPlot.plot_res(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+    except:
+        print 'Resolution did not work.... Fix me!'
+        continue
 
-    # Need to fix this at a later time -- right now, it relies on the ability to reload rays (which is depreciated).    
+    # Plotting the resolution result of the calculation for the whole configuration.
+    print '#'*40
+    print 'Plotting the weak line detection merit function for the whole channel...'
+    print '#'*40 + '\n'
+    try:
+        ArcMCPlot.plot_merit(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+    except:
+        print 'Merit did not work.... Fix me!'
+        continue
+
     # Plotting the effective area of the calculation on a row-by-row basis.
     print '#'*40
     print 'Plotting/outputting the effective areas on a row-by-row basis...'
@@ -260,7 +267,8 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     try:
         ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,rowR,rowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
     except:
-        pdb.set_trace()
+        print 'Row-by-row did not work.... Fix me!'
+        continue
 
     return 
     
