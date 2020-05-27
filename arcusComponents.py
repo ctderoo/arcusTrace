@@ -216,8 +216,7 @@ class ArcusChannel(object):
         xou_header,xou_data = read_caldb_csvfile(xou_pointer)
         if xou_ref_pointer is not None:
             ref_func = ArcPerf.make_reflectivity_func(xou_ref_pointer)
-        xou_header = xou_header.split(",")
-        
+
         # Keys needed to initialize the Arcus XOUs.
         needed_init_keys = ['xou_num','chan_id','MM_num','row_num','focal_length', 'z0',\
                             'inner_radius','outer_radius','kink_radius','azwidth','clocking_angle','primary_length', \
@@ -226,11 +225,11 @@ class ArcusChannel(object):
         def selector(values,ind,dtypes = dtype_init_keys):
             return dtypes[ind](values[ind])
         
-        ind = [xou_header.index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
+        ind = [xou_header.tolist().index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
         
         chan_xous = dict()
         for i in range(len(xou_data)):
-            xou_chars = xou_data[i].split(",")
+            xou_chars = xou_data[i]
             xou_num,chan_id,MM_num,row_num,focal_length,z0,inner_radius,outer_radius,kink_radius,azwidth,clock_ang,plength,slength,pore_space,plate_height = [selector(xou_chars,ind[j]) for j in range(len(ind))]
             chan_xous['XOU' + str(xou_num)] = xou(xou_num,focal_length,z0,inner_radius,outer_radius,kink_radius,\
                 azwidth,plength,slength,clock_ang,pore_space, plate_height)
@@ -247,11 +246,11 @@ class ArcusChannel(object):
         if order_select is None:
             geff_func = ArcPerf.make_geff_interp_func(diff_eff_pointer)
 
-        try:
-            facet_header = facet_header.split(",")
-        except:
-            facet_header = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
-                            'DispNX','DispNY','DispNZ','GBarNX','GBarNY','GBarNZ','NormNX','NormNY','NormNZ','xsize','ysize','period']
+        #try:
+        #    facet_header = facet_header.split(",")
+        #except:
+        #    facet_header = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
+        #                    'DispNX','DispNY','DispNZ','GBarNX','GBarNY','GBarNZ','NormNX','NormNY','NormNZ','xsize','ysize','period']
 
         # Keys needed to initialize the Arcus XOUs.
         needed_init_keys = ['facet_num','chan_id','SPO_MM_num','SPO_row_num','X','Y','Z',\
@@ -262,14 +261,14 @@ class ArcusChannel(object):
         def selector(values,ind,dtypes = dtype_init_keys):
             return dtypes[ind](values[ind])
         
-        ind = [facet_header.index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
+        ind = [facet_header.tolist().index(needed_init_keys[i]) for i in range(len(needed_init_keys))]
         
         chan_facets = dict()
         for i in range(len(facet_data)):
-            try:
-                facet_chars = facet_data[i].split(",")
-            except:
-                facet_chars = facet_data[i].tolist()
+            #try:
+            #    facet_chars = facet_data[i].split(",")
+            #except:
+            facet_chars = facet_data[i].tolist()
 
             facet_num,chan_id,SPO_MM_num,SPO_row_num,X,Y,Z,\
                             DispNX,DispNY,DispNZ,GBarNX,GBarNY,GBarNZ,NormNX,NormNY,NormNZ,xsize,ysize,period= [selector(facet_chars,ind[j]) for j in range(len(ind))]

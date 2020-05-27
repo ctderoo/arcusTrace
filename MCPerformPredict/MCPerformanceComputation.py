@@ -232,7 +232,7 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print '#'*40
     print 'Plotting the effective area for the whole channel...'
     print '#'*40 + '\n'
-    ArcMCPlot.plot_ea(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+    ArcMCPlot.plot_ea(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend + '_EA', title_description = ea_title_description)
 
     # Plotting the effective area of the calculation on a channel-by-channel basis.
     print '#'*40
@@ -245,20 +245,20 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
     print 'Plotting the resolution for the whole channel...'
     print '#'*40 + '\n'
     try:
-        ArcMCPlot.plot_res(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+        ArcMCPlot.plot_res(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend + '_Res', title_description = ea_title_description)
     except:
         print 'Resolution did not work.... Fix me!'
-        continue
+        pdb.set_trace()
 
     # Plotting the resolution result of the calculation for the whole configuration.
     print '#'*40
     print 'Plotting the weak line detection merit function for the whole channel...'
     print '#'*40 + '\n'
     try:
-        ArcMCPlot.plot_merit(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend, title_description = ea_title_description)
+        ArcMCPlot.plot_merit(wavelengths,orders,ArcusR,ArcusEA, plot_fn = plot_path + fileend + '_Merit', title_description = ea_title_description)
     except:
         print 'Merit did not work.... Fix me!'
-        continue
+        pdb.set_trace()
 
     # Plotting the effective area of the calculation on a row-by-row basis.
     print '#'*40
@@ -268,7 +268,7 @@ def ArcusConfigPerfCalc(opt_chans,fpa,wavelengths,N,\
         ArcMCPlot.do_rowbyrow_outputs(wavelengths,orders,rowR,rowEA,fileend,csv_path,pickle_path,plot_path,csv_description,ea_title_description)
     except:
         print 'Row-by-row did not work.... Fix me!'
-        continue
+        pdb.set_trace()
 
     return 
     
