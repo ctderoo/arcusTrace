@@ -34,28 +34,28 @@ def row_param_construct(row_param1,row_param2):
 number_of_mms = 24
 row_num = arange(1,7)
 
-# Inner and outer radii are taken from "Arcus SPO Layout - ARCUS-200-P-30Mar2020".
+# Inner and outer radii are taken from "Arcus 2020 - SPO MM geometry 06Oct2020-10.xlsx".
 # Inner stacks are denoted MMO, outer stacks are denoted MM1.
 # Inner radii come from column "Inner Radius (mm)"
 # Outer radii come from column "Outer Radius (mm).
 
-row_MM0_ir = array([ 385.418,   453.018,    520.618,    588.118,    655.718,    723.318])
-row_MM0_or = array([ 414.868,   482.468,    550.068,    617.568,    685.168,    752.768])
-row_MM1_ir = array([ 415.533,   483.133,    550.733,    618.233,    685.833,    753.433])
-row_MM1_or = array([ 444.983,   512.583,    580.183,    647.683,    715.283,    782.883])
+row_MM0_ir = array([ 382.640,   450.841,    519.044,    587.429,    655.453,    723.658])
+row_MM0_or = array([ 412.042,   480.250,    548.458,    616.666,    684.873,    753.079])
+row_MM1_ir = array([ 412.751,   480.951,    549.153,    617.357,    685.560,    753.762])
+row_MM1_or = array([ 442.156,   510.362,    578.568,    646.775,    714.980,    783.184])
 
 # Inner and outer radii are taken from "Arcus 2020 - SPO MM geometry 25Mar2020"
 # Kink radii come from "Radius at Kink of Reference (Plate #18)".
 # Lengths come from Stack length axial (Z) direction
 # Widths come from "Stack width azimuthal (X) direction"
-row_MM0_kink = array([ 400.143,   467.743,    535.343,    602.843,    670.443,    738.043])
-row_MM1_kink = array([ 430.258,   497.858,    565.458,    632.958,    700.558,    768.158])
+row_MM0_kink = array([ 396.234,   464.438,    532.644,    600.850,    669.056,    737.261])
+row_MM1_kink = array([ 426.346,   494.550,    562.754,    630.959,    699.163,    767.366])
 
-row_MM0_length = array([82.819, 70.461, 61.312, 54.275, 48.679, 44.130])
-row_MM1_length = array([76.817, 66.069, 57.959, 51.631, 46.542, 42.366])
+row_MM0_length = array([80.559, 68.728, 59.928, 53.125, 47.709, 43.295])
+row_MM1_length = array([74.869, 64.544, 56.721, 50.590, 45.655, 41.597])
 
-row_MM0_w = array([76.7715, 71.6688, 68.2668, 80.0597, 75.9448, 86.0527])
-row_MM1_w = array([76.7715, 71.6688, 68.2668, 80.0597, 75.9448, 86.0527])
+row_MM0_w = array([75.9390, 71.1370, 85.4230, 79.8400, 75.8530, 86.0560])
+row_MM1_w = array([75.9390, 71.1370, 85.4230, 79.8400, 75.8530, 86.0560])
 
 # Finally, a calculation of the z0_focal length, as defined for Wolter-I types. This corresponds to 
 # the z-placement on the optical axis.

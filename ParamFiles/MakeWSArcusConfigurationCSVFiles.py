@@ -165,6 +165,48 @@ def write_spos_to_bitbucket(arcus_xous,csv_fn = 'Arcus_SPO_XOU_Specs_Rev2p0_2004
     csvfile.close()
     return
 
+
+import astropy.units as u
+from astropy.table import QTable
+
+sorted_xous = zip(*sorted(tuple([(arcus_xous[key].xou_num,arcus_xous[key]) for key in arcus_xous.keys()])))
+
+xou_num = array([sorted_xous[1][i].xou_num for i in range(len(sorted_xous[0]))],dtype = int64)
+
+spo_table = QTable([xou_num],names = ('xou_num',),meta={'Author':'Casey DeRoo','ORIGFILE':'arcusTrace.ParamFiles.arcus_params_wsdesign_rev1p0.py','Description':  'Specifications of SPOs from preliminary specifications for Arcus 2020 (E. Hertz) as of 20/04/24'})
+spo_table.write('trial.csv',format='ascii.ecsv')
+
+def write_spos_to_bitbucket_astropy(arcus_xous,csv_fn = 'Arcus_SPO_XOU_Specs_Rev2p1_201005.csv'):
+    sorted_xous = zip(*sorted(tuple([(arcus_xous[key].xou_num,arcus_xous[key]) for key in arcus_xous.keys()])))
+
+    xou_num = array([sorted_xous[1][i].xou_num for i in range(len(sorted_xous[0]))],dtype = int)
+    chan_id = array([sorted_xous[1][i].chan_id for i in range(len(sorted_xous[0]))],dtype = int)
+    MM_num  = array([sorted_xous[1][i].MM_num for i in range(len(sorted_xous[0]))],dtype = int)
+    row_num = array([sorted_xous[1][i].row_num for i in range(len(sorted_xous[0]))],dtype = int)
+    focal_length = array([sorted_xous[1][i].focal_length for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    z0 = array([sorted_xous[1][i].z0 for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    inner_radius = array([sorted_xous[1][i].inner_radius for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    outer_radius = array([sorted_xous[1][i].outer_radius for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    kink_radius = array([sorted_xous[1][i].kink_radius for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    azwidth = array([sorted_xous[1][i].azwidth for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    clocking_angle = array([sorted_xous[1][i].clocking_angle for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    primary_length = array([sorted_xous[1][i].primary_length for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    secondary_length = array([sorted_xous[1][i].secondary_length for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    pore_space = array([sorted_xous[1][i].pore_space for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    plate_height = array([sorted_xous[1][i].plate_height for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    plate_coating = array([sorted_xous[1][i].plate_coating for i in range(len(sorted_xous[0]))],dtype = str)
+
+    spo_table = QTable([xou_num,chan_id,MM_num,row_num,focal_length,z0,inner_radius,outer_radius,\
+                    kink_radius,azwidth,clocking_angle,primary_length,secondary_length,pore_space,\
+                    plate_height,plate_coating], names = ('xou_num','chan_id','MM_num','row_num','focal_length','z0',\
+                    'inner_radius','outer_radius','kink_radius', 'azwidth','clocking_angle','primary_length',\
+                    'secondary_length','pore_space','plate_height','plate_coating'),\
+                    meta={'Author':'Casey DeRoo','ORIGFILE':'arcusTrace.ParamFiles.arcus_params_wsdesign_rev2p0.py',\
+                    'Description':  'Specifications of SPOs from preliminary specifications for Arcus 2020 (E. Hertz) as of 20/10/09'})
+    spo_table.write('petallayout.csv',format='ascii.ecsv',overwrite = True)
+
+    return
+
 def write_facets_to_bitbucket(arcus_facets,csv_fn = 'Arcus_CATGrating_Facets_Specs_Rev2p1_200518.csv'):
     sorted_facets = zip(*sorted(tuple([(arcus_facets[key].facet_num,arcus_facets[key]) for key in arcus_facets.keys()])))
     
@@ -280,5 +322,5 @@ def write_facets_to_bitbucket(arcus_facets,csv_fn = 'Arcus_CATGrating_Facets_Spe
 
 
 #write_spos_to_bitbucket(arcus_xous)
-write_facets_to_bitbucket(arcus_facets)
+#write_facets_to_bitbucket(arcus_facets)
 #write_detectors_to_bitbucket(arcus_detectors)
