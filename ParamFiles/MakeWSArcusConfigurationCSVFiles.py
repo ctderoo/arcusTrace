@@ -189,7 +189,7 @@ def write_spos_to_bitbucket_astropy(arcus_xous,csv_fn = 'Arcus_SPO_XOU_Specs_Rev
     outer_radius = array([sorted_xous[1][i].outer_radius for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
     kink_radius = array([sorted_xous[1][i].kink_radius for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
     azwidth = array([sorted_xous[1][i].azwidth for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
-    clocking_angle = array([sorted_xous[1][i].clocking_angle for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
+    clocking_angle = array([sorted_xous[1][i].clocking_angle for i in range(len(sorted_xous[0]))],dtype = float64)*u.rad
     primary_length = array([sorted_xous[1][i].primary_length for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
     secondary_length = array([sorted_xous[1][i].secondary_length for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
     pore_space = array([sorted_xous[1][i].pore_space for i in range(len(sorted_xous[0]))],dtype = float64)*u.mm
