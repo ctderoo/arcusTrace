@@ -12,7 +12,7 @@ import PyXFocus.grating as grat
 import PyXFocus.conicsolve as conic
 
 ##########################################################################
-# Functions needed.
+# Coordinate transformation functions.
 ##########################################################################
 
 def make_rot_matrix(tgrat,pgrat,ngrat):
@@ -125,4 +125,4 @@ def check_normals(rays,grat_hit,ind):
 
 def get_xou_ray_object(ray_object,ind):
     selector = ray_object.xou_hit == ind
-    
+   

@@ -5,6 +5,7 @@ import string
 
 import pdb
 from scipy.optimize import root
+from scipy.spatial.transform import Rotation as R
 
 import arcusTrace.arcusPerformance as ArcPerf
 import arcusTrace.arcusUtilities as ArcUtil
@@ -365,3 +366,36 @@ class ArcusFPA(object):
             self.fpa_dets[key].ccd_coords = coordinate_system(x + fpa_x,y + fpa_y,z + fpa_z,new_xhat,new_yhat,new_zhat)
             
 
+####################################################################
+# Mechanical Tolerancing functions.
+
+def rotate_xou_petal_coords(xou, xtheta, ytheta, ztheta):
+    '''
+    General rotation of an XOU about x, y, z.
+    '''
+    # Getting the current reference frame.
+    x,y,z,xhat,yhat,zhat = xou.xou_coords.unpack()
+
+    # For bookkeeping right now, saving a default coordinate system I can compare to.
+    xou.default_xou_coords = coordinate_system(x,y,z,xhat,yhat,zhat)
+    
+    # Constructing the rotation from the inputs using a scipy.spatial.transform Rotation operation.
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html#scipy.spatial.transform.Rotation
+    r = R.from_rotvec([xtheta,ytheta,ztheta])
+
+    # I can then apply it to each of the "hatted" vectors in turn to rebuild my coordinate system.
+    xou.xou_coords = coordinate_system(x,y,z,r.apply(xhat),r.apply(yhat),r.apply(zhat)) 
+
+def cylinder_deform(chan, RoC):
+    '''
+    Performs a cylindrical deformation in the center of the XOU. This is similar to the 
+    kind of error you might expect to see under gravity sag.
+    '''
+    for xou_name in chan.chan_xous:
+        xou = chan.chan_xous[xou_name]
+        xou.mid_r = (xou.inner_radius + xou.outer_radius)/2
+        xou.mid_x,xou.mid_y = xou.mid_r*sin(xou.clocking_angle), xou.mid_r*cos(xou.clocking_angle)
+
+        # Calculating the rotation angle about y to get the new aimpoint of the XOU
+        xou.gsag_angle_cyl = arcsin(xou.mid_x/RoC) 
+        rotate_xou_petal_coords(xou, 0., xou.gsag_angle_cyl, 0.)
